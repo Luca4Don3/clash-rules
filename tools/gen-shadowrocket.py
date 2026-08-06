@@ -428,7 +428,7 @@ def patch_clash_platform_extra(repo_root, cats):
 
     clash_dir = os.path.join(repo_root, "clash")
     patch(os.path.join(clash_dir, "rule-provider.yaml"), "", "- ")
-    patch(os.path.join(clash_dir, "clash-verge-merge.yaml"), "  ", "- - ")
+    patch(os.path.join(clash_dir, "clash-verge-merge.yaml"), "  ", "- ")
 
 
 def patch_clash_rule_sets(repo_root):
@@ -500,7 +500,7 @@ def patch_clash_rule_sets(repo_root):
         final.append(line)
         if hit(line):
             for name, _ in sets:
-                final.append(f"  - - RULE-SET,{name},REJECT")
+                final.append(f"  - RULE-SET,{name},REJECT")
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(final) + "\n")
     print(f"  {path}: 注入 {[n for n, _ in sets]}")
