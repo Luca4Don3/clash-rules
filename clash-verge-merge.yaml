@@ -518,8 +518,3 @@ prepend-rules:
   # ===== 兜底 =====
   - - GEOIP,CN,DIRECT
   - - MATCH,直连优先
-
-append-proxy-groups:
-  # 代理出口组(若订阅无 PROXY 组,请把成员改为你订阅的节点组名)
-  - { name: 'PROXY', type: select, proxies: ['自动选择', '节点选择', DIRECT] }
-  - { name: '直连优先', type: fallback, proxies: [DIRECT, PROXY], url: 'https://www.google.com/generate_204', interval: 300 }

@@ -46,3 +46,16 @@ rule-providers:
 ## 提示
 
 - 兜底策略:建议将订阅自带 `rules` 末尾的 `MATCH` 指向 `直连优先` 组,体验最佳
+
+## 需要自行添加的代理组
+
+规则引用了两个组,在订阅配置的 `proxy-groups:` 中添加(组名按你的订阅调整):
+
+```yaml
+    # 代理出口:规则中的 PROXY 指向这里
+    - { name: 'PROXY', type: select, proxies: ['自动选择', '节点选择', DIRECT] }
+    # 兜底:能直连就直连,不通走代理
+    - { name: '直连优先', type: fallback, proxies: [DIRECT, PROXY], url: 'https://www.google.com/generate_204', interval: 300 }
+```
+
+若你的订阅已有同名组,忽略即可。
