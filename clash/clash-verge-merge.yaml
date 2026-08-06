@@ -14,6 +14,9 @@ prepend-rule-providers:
     url: https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/rules/malware.list
     path: ./rules/malware.yaml
     interval: 86400
+profile:
+  store-selected: true
+
 prepend-rules:
   # ===== 广告拦截 =====
   - - GEOSITE,category-ads-all,REJECT
