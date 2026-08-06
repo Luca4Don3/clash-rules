@@ -1,20 +1,9 @@
-# Clash Verge 全局扩展(URL 导入,订阅更新不丢规则)
-# 用法:设置 → 全局扩展 → 从 URL 添加
+# 分流规则 - Clash Verge 全局扩展
+# 用法:设置 -> 全局扩展 -> 从 URL 添加
 
 prepend-rules:
-  #   3. 把「一、proxy-groups」里的组追加到 proxy-groups: 段末尾
-  #   保存即可生效(订阅更新后需重新替换)
-  # ============================================
-  # ============================================
-  # 一、proxy-groups(追加到订阅配置的 proxy-groups: 段末尾)
-  #   用途:默认直连,直连不通自动切代理
-  # ============================================
-  - - { name: '直连优先', type: fallback, proxies: [DIRECT, PROXY], url: 'https://www.google.com/generate_204', interval: 300 }
-  # ============================================
-  # 二、rules(整段替换订阅配置的 rules: 段)
-  # ============================================
-  - rules:
-  # ===== 广告拦截(纯广告/统计,不影响功能)=====
+  # ===== 广告拦截 =====
+  - - GEOSITE,category-ads-all,REJECT
   - - DOMAIN,hm.baidu.com,REJECT
   - - DOMAIN,cpro.baidu.com,REJECT
   - - DOMAIN,pos.baidu.com,REJECT
@@ -34,39 +23,57 @@ prepend-rules:
   - - DOMAIN-SUFFIX,miaozhen.com,REJECT
   - - DOMAIN-SUFFIX,admaster.com.cn,REJECT
   - - DOMAIN-SUFFIX,ipinyou.com,REJECT
-  # ==================== 走代理 ====================
-  # ----- 微软系(下载加速 & 全系服务)-----
-  - - DOMAIN-SUFFIX,download.microsoft.com,PROXY
-  - - DOMAIN-SUFFIX,software-download.microsoft.com,PROXY
-  - - DOMAIN-SUFFIX,officecdn.microsoft.com,PROXY
-  - - DOMAIN-SUFFIX,aka.ms,PROXY
-  - - DOMAIN-SUFFIX,visualstudio.microsoft.com,PROXY
-  - - DOMAIN-SUFFIX,microsoft.com,PROXY
-  - - DOMAIN-SUFFIX,microsoftonline.com,PROXY
-  - - DOMAIN-SUFFIX,office.com,PROXY
-  - - DOMAIN-SUFFIX,office365.com,PROXY
-  - - DOMAIN-SUFFIX,live.com,PROXY
-  - - DOMAIN-SUFFIX,outlook.com,PROXY
-  - - DOMAIN-SUFFIX,sharepoint.com,PROXY
-  - - DOMAIN-SUFFIX,onedrive.com,PROXY
-  - - DOMAIN-SUFFIX,msn.com,PROXY
-  - - DOMAIN-SUFFIX,bing.com,PROXY
-  - - DOMAIN-SUFFIX,msftconnecttest.com,PROXY
-  - - DOMAIN-SUFFIX,msedge.net,PROXY
-  - - DOMAIN-SUFFIX,azure.com,PROXY
-  - - DOMAIN-SUFFIX,azurefd.net,PROXY
-  - - DOMAIN-SUFFIX,azurestaticapps.net,PROXY
-  - - DOMAIN-SUFFIX,skype.com,PROXY
-  - - DOMAIN-SUFFIX,xboxlive.com,PROXY
-  - - DOMAIN-SUFFIX,github.com,直连优先
-  - - DOMAIN-SUFFIX,github.dev,直连优先
-  - - DOMAIN-SUFFIX,githubstatus.com,直连优先
-  - - DOMAIN-SUFFIX,githubusercontent.com,直连优先
-  - - DOMAIN-SUFFIX,objects.githubusercontent.com,直连优先
-  - - DOMAIN-SUFFIX,codeload.github.com,直连优先
-  - - DOMAIN-SUFFIX,releases.githubusercontent.com,直连优先
-  - - DOMAIN-SUFFIX,ghcr.io,直连优先
-  # ----- OpenAI / 海外 AI -----
+  # ===== 国内定制规则(优先于 GEOSITE)=====
+  - - DOMAIN-SUFFIX,deepseek.com,DIRECT
+  - - DOMAIN-SUFFIX,moonshot.cn,DIRECT
+  - - DOMAIN-SUFFIX,kimi.com,DIRECT
+  - - DOMAIN-SUFFIX,zhipuai.cn,DIRECT
+  - - DOMAIN-SUFFIX,bigmodel.cn,DIRECT
+  - - DOMAIN-SUFFIX,aliyun.com,DIRECT
+  - - DOMAIN-SUFFIX,aliyuncs.com,DIRECT
+  - - DOMAIN-SUFFIX,tongyi.com,DIRECT
+  - - DOMAIN-SUFFIX,doubao.com,DIRECT
+  - - DOMAIN-SUFFIX,baidu.com,DIRECT
+  - - DOMAIN-SUFFIX,minimax.chat,DIRECT
+  - - DOMAIN-SUFFIX,minimaxi.com,DIRECT
+  - - DOMAIN-SUFFIX,stepfun.com,DIRECT
+  - - DOMAIN-SUFFIX,01.ai,DIRECT
+  - - DOMAIN-SUFFIX,baichuan-ai.com,DIRECT
+  - - DOMAIN-SUFFIX,xfyun.cn,DIRECT
+  - - DOMAIN-SUFFIX,siliconflow.cn,DIRECT
+  - - DOMAIN-SUFFIX,modelbest.cn,DIRECT
+  - - DOMAIN-SUFFIX,apiece.ai,DIRECT
+  - - DOMAIN-SUFFIX,klingai.com,DIRECT
+  - - DOMAIN-SUFFIX,liblib.art,DIRECT
+  - - DOMAIN-SUFFIX,tusiart.com,DIRECT
+  - - DOMAIN-SUFFIX,jianying.com,DIRECT
+  - - DOMAIN-SUFFIX,chatglm.cn,DIRECT
+  - - DOMAIN-SUFFIX,163.com,DIRECT
+  - - DOMAIN-SUFFIX,126.com,DIRECT
+  - - DOMAIN-SUFFIX,yeah.net,DIRECT
+  - - DOMAIN-SUFFIX,qq.com,DIRECT
+  - - DOMAIN-SUFFIX,foxmail.com,DIRECT
+  - - DOMAIN-SUFFIX,sina.com,DIRECT
+  - - DOMAIN-SUFFIX,sina.com.cn,DIRECT
+  - - DOMAIN-SUFFIX,139.com,DIRECT
+  - - DOMAIN-SUFFIX,189.cn,DIRECT
+  - - DOMAIN-SUFFIX,263.net,DIRECT
+  - - DOMAIN-SUFFIX,263.com,DIRECT
+  - - DOMAIN-SUFFIX,sohu.com,DIRECT
+  - - DOMAIN-SUFFIX,tom.com,DIRECT
+  - - DOMAIN-SUFFIX,21cn.com,DIRECT
+  - - DOMAIN-SUFFIX,china.com,DIRECT
+  - - DOMAIN-SUFFIX,feishu.cn,DIRECT
+  - - DOMAIN-SUFFIX,pstatp.com,DIRECT
+  - - DOMAIN-SUFFIX,steamchina.com,DIRECT
+  - - DOMAIN-SUFFIX,amazonaws.cn,DIRECT
+  - - DOMAIN-SUFFIX,amazonaws.com.cn,DIRECT
+  - - DOMAIN-SUFFIX,amazon.cn,DIRECT
+  - - DOMAIN-SUFFIX,azure.cn,DIRECT
+  - - DOMAIN-SUFFIX,icloud-content.com,DIRECT
+  # ===== 中国大陆(GEOSITE 自动更新)=====
+  - - GEOSITE,cn,DIRECT
+  # ===== 封 IP 平台强制代理(不直连)=====
   - - DOMAIN-SUFFIX,openai.com,PROXY
   - - DOMAIN-SUFFIX,chatgpt.com,PROXY
   - - DOMAIN-SUFFIX,oaistatic.com,PROXY
@@ -75,333 +82,82 @@ prepend-rules:
   - - DOMAIN-SUFFIX,openai.org,PROXY
   - - DOMAIN-SUFFIX,auth0.com,PROXY
   - - DOMAIN-SUFFIX,azureedge.net,PROXY
+  - - DOMAIN-SUFFIX,oai.ai,PROXY
   - - DOMAIN-SUFFIX,anthropic.com,PROXY
   - - DOMAIN-SUFFIX,claude.ai,PROXY
   - - DOMAIN-SUFFIX,grok.com,PROXY
-  # Ollama(本地模型工具,官网/模型库走代理)
+  - - DOMAIN-SUFFIX,x.ai,PROXY
+  - - DOMAIN-SUFFIX,cursor.com,PROXY
+  - - DOMAIN-SUFFIX,cursor.sh,PROXY
   - - DOMAIN-SUFFIX,ollama.com,PROXY
   - - DOMAIN-SUFFIX,ollama.ai,PROXY
+  - - DOMAIN-SUFFIX,gemini.google.com,PROXY
+  - - DOMAIN-SUFFIX,aistudio.google.com,PROXY
+  - - DOMAIN-SUFFIX,generativelanguage.googleapis.com,PROXY
   - - DOMAIN-SUFFIX,perplexity.ai,PROXY
   - - DOMAIN-SUFFIX,huggingface.co,PROXY
   - - DOMAIN-SUFFIX,hf.co,PROXY
   - - DOMAIN-SUFFIX,openrouter.ai,PROXY
   - - DOMAIN-SUFFIX,openrouterusercontent.com,PROXY
-  - - DOMAIN-SUFFIX,cursor.com,PROXY
-  - - DOMAIN-SUFFIX,cursor.sh,PROXY
-  - - DOMAIN-SUFFIX,midjourney.com,PROXY
-  - - DOMAIN-SUFFIX,runwayml.com,PROXY
-  - - DOMAIN-SUFFIX,elevenlabs.io,PROXY
-  - - DOMAIN-SUFFIX,suno.com,PROXY
   - - DOMAIN-SUFFIX,poe.com,PROXY
   - - DOMAIN-SUFFIX,character.ai,PROXY
-  - - DOMAIN-SUFFIX,gemini.google.com,PROXY
-  - - DOMAIN-SUFFIX,aistudio.google.com,PROXY
-  - - DOMAIN-SUFFIX,generativelanguage.googleapis.com,PROXY
-  # ----- 境内厂商海外版(走代理;境内版见直连段)-----
-  # 注意:dashscope-intl 是 aliyuncs.com 子域,此规则必须在境内直连之前命中
-  - - DOMAIN-SUFFIX,dashscope-intl.aliyuncs.com,PROXY
-  - - DOMAIN-SUFFIX,alibabacloud.com,PROXY
-  # 智谱海外版
-  - - DOMAIN-SUFFIX,z.ai,PROXY
-  # MiniMax 海外版
-  - - DOMAIN-SUFFIX,minimax.io,PROXY
-  # Kimi/月之暗面海外版
-  - - DOMAIN-SUFFIX,moonshot.ai,PROXY
-  # 字节海外 BytePlus
-  - - DOMAIN-SUFFIX,byteplus.com,PROXY
-  # 腾讯云国际站
-  - - DOMAIN-SUFFIX,tencentcloud.com,PROXY
-  # 硅基流动国际站
-  - - DOMAIN-SUFFIX,siliconflow.com,PROXY
-  # ----- Google 系 -----
-  - - DOMAIN-SUFFIX,google.com,PROXY
-  - - DOMAIN-SUFFIX,googleapis.com,PROXY
-  - - DOMAIN-SUFFIX,gstatic.com,PROXY
-  - - DOMAIN-SUFFIX,googlevideo.com,PROXY
-  - - DOMAIN-SUFFIX,youtube.com,PROXY
-  - - DOMAIN-SUFFIX,ytimg.com,PROXY
-  - - DOMAIN-SUFFIX,googleusercontent.com,PROXY
-  - - DOMAIN-SUFFIX,google-analytics.com,PROXY
-  - - DOMAIN-SUFFIX,googletagmanager.com,PROXY
-  - - DOMAIN-SUFFIX,dl.google.com,PROXY
-  - - DOMAIN-SUFFIX,android.com,PROXY
-  - - DOMAIN-SUFFIX,chrome.com,PROXY
-  - - DOMAIN-SUFFIX,ggpht.com,PROXY
-  - - DOMAIN-SUFFIX,gvt1.com,PROXY
-  - - DOMAIN-SUFFIX,gvt2.com,PROXY
-  - - DOMAIN-SUFFIX,goo.gl,PROXY
-  - - DOMAIN-SUFFIX,blogspot.com,PROXY
-  - - DOMAIN-SUFFIX,doubleclick.net,PROXY
-  - - DOMAIN-SUFFIX,googleadservices.com,PROXY
-  - - DOMAIN-SUFFIX,google.com.hk,PROXY
-  - - DOMAIN-SUFFIX,google.com.tw,PROXY
-  - - DOMAIN-SUFFIX,google.co.jp,PROXY
-  - - DOMAIN-SUFFIX,google.com.sg,PROXY
-  - - DOMAIN-SUFFIX,google.co.uk,PROXY
-  - - DOMAIN-SUFFIX,google.de,PROXY
-  - - DOMAIN-SUFFIX,google.fr,PROXY
-  - - DOMAIN-SUFFIX,google.ca,PROXY
-  - - DOMAIN-SUFFIX,google.com.au,PROXY
-  - - DOMAIN-SUFFIX,google.co.in,PROXY
-  - - DOMAIN-SUFFIX,google.it,PROXY
-  - - DOMAIN-SUFFIX,google.es,PROXY
-  - - DOMAIN-SUFFIX,google.co.kr,PROXY
-  - - DOMAIN-SUFFIX,google.com.br,PROXY
-  - - DOMAIN-SUFFIX,google.co.th,PROXY
-  - - DOMAIN-SUFFIX,google.com.vn,PROXY
-  - - DOMAIN-SUFFIX,google.com.my,PROXY
-  - - DOMAIN-SUFFIX,google.com.ph,PROXY
-  # ----- 社交网络 -----
-  - - DOMAIN-SUFFIX,x.com,PROXY
-  - - DOMAIN-SUFFIX,twitter.com,PROXY
-  - - DOMAIN-SUFFIX,twimg.com,PROXY
-  - - DOMAIN-SUFFIX,t.co,PROXY
-  - - DOMAIN-SUFFIX,facebook.com,PROXY
-  - - DOMAIN-SUFFIX,fbcdn.net,PROXY
-  - - DOMAIN-SUFFIX,instagram.com,PROXY
-  - - DOMAIN-SUFFIX,whatsapp.com,PROXY
-  - - DOMAIN-SUFFIX,messenger.com,PROXY
-  - - DOMAIN-SUFFIX,telegram.org,PROXY
-  - - DOMAIN-SUFFIX,t.me,PROXY
-  - - DOMAIN-SUFFIX,telesco.pe,PROXY
-  - - DOMAIN-SUFFIX,discord.com,PROXY
-  - - DOMAIN-SUFFIX,discord.gg,PROXY
-  # Discord 短链/同类语音平台(强制代理)
-  - - DOMAIN-SUFFIX,dis.gd,PROXY
-  - - DOMAIN-SUFFIX,guilded.gg,PROXY
-  - - DOMAIN-SUFFIX,teamspeak.com,PROXY
-  - - DOMAIN-SUFFIX,element.io,PROXY
-  - - DOMAIN-SUFFIX,discordapp.com,PROXY
-  - - DOMAIN-SUFFIX,reddit.com,PROXY
-  - - DOMAIN-SUFFIX,redd.it,PROXY
-  - - DOMAIN-SUFFIX,linkedin.com,PROXY
-  - - DOMAIN-SUFFIX,snapchat.com,PROXY
-  - - DOMAIN-SUFFIX,pinterest.com,PROXY
-  - - DOMAIN-SUFFIX,tumblr.com,PROXY
-  - - DOMAIN-SUFFIX,tiktok.com,PROXY
-  - - DOMAIN-SUFFIX,tiktokcdn.com,PROXY
-  - - DOMAIN-SUFFIX,signal.org,PROXY
-  - - DOMAIN-SUFFIX,quora.com,PROXY
-  # ----- 视频 / 音乐 / 流媒体 -----
-  - - DOMAIN-SUFFIX,netflix.com,PROXY
-  - - DOMAIN-SUFFIX,nflxso.net,PROXY
-  - - DOMAIN-SUFFIX,nflxvideo.net,PROXY
-  - - DOMAIN-SUFFIX,disneyplus.com,PROXY
-  - - DOMAIN-SUFFIX,hulu.com,PROXY
-  - - DOMAIN-SUFFIX,primevideo.com,PROXY
-  - - DOMAIN-SUFFIX,hbomax.com,PROXY
-  - - DOMAIN-SUFFIX,max.com,PROXY
-  - - DOMAIN-SUFFIX,spotify.com,PROXY
-  - - DOMAIN-SUFFIX,scdn.co,PROXY
-  - - DOMAIN-SUFFIX,soundcloud.com,PROXY
-  - - DOMAIN-SUFFIX,deezer.com,PROXY
-  - - DOMAIN-SUFFIX,tidal.com,PROXY
-  - - DOMAIN-SUFFIX,twitch.tv,PROXY
-  # ----- 视频直播平台补充(强制代理)-----
-  - - DOMAIN-SUFFIX,trovo.live,PROXY
-  - - DOMAIN-SUFFIX,nimo.tv,PROXY
-  - - DOMAIN-SUFFIX,afreecatv.com,PROXY
-  - - DOMAIN-SUFFIX,bigo.tv,PROXY
-  - - DOMAIN-SUFFIX,dlive.tv,PROXY
-  - - DOMAIN-SUFFIX,streamable.com,PROXY
-  - - DOMAIN-SUFFIX,rutube.ru,PROXY
-  - - DOMAIN-SUFFIX,ok.ru,PROXY
-  - - DOMAIN-SUFFIX,ttvnw.net,PROXY
-  - - DOMAIN-SUFFIX,vimeo.com,PROXY
-  - - DOMAIN-SUFFIX,dailymotion.com,PROXY
-  - - DOMAIN-SUFFIX,crunchyroll.com,PROXY
-  - - DOMAIN-SUFFIX,nicovideo.jp,PROXY
-  # ----- 新闻 / 资讯 -----
-  - - DOMAIN-SUFFIX,nytimes.com,PROXY
-  - - DOMAIN-SUFFIX,bbc.com,PROXY
-  - - DOMAIN-SUFFIX,bbc.co.uk,PROXY
-  - - DOMAIN-SUFFIX,cnn.com,PROXY
-  - - DOMAIN-SUFFIX,bloomberg.com,PROXY
-  - - DOMAIN-SUFFIX,reuters.com,PROXY
-  - - DOMAIN-SUFFIX,theguardian.com,PROXY
-  - - DOMAIN-SUFFIX,wsj.com,PROXY
-  - - DOMAIN-SUFFIX,washingtonpost.com,PROXY
-  - - DOMAIN-SUFFIX,ft.com,PROXY
-  - - DOMAIN-SUFFIX,economist.com,PROXY
-  - - DOMAIN-SUFFIX,time.com,PROXY
-  - - DOMAIN-SUFFIX,forbes.com,PROXY
-  - - DOMAIN-SUFFIX,aljazeera.com,PROXY
-  - - DOMAIN-SUFFIX,dw.com,PROXY
-  - - DOMAIN-SUFFIX,france24.com,PROXY
-  - - DOMAIN-SUFFIX,npr.org,PROXY
-  - - DOMAIN-SUFFIX,medium.com,PROXY
-  # ----- 开发者 / 技术 -----
-  - - DOMAIN-SUFFIX,stackoverflow.com,PROXY
-  - - DOMAIN-SUFFIX,stackexchange.com,PROXY
-  - - DOMAIN-SUFFIX,gitlab.com,PROXY
-  - - DOMAIN-SUFFIX,bitbucket.org,PROXY
-  - - DOMAIN-SUFFIX,npmjs.com,PROXY
-  - - DOMAIN-SUFFIX,npmjs.org,PROXY
-  - - DOMAIN-SUFFIX,docker.io,PROXY
-  - - DOMAIN-SUFFIX,docker.com,PROXY
-  - - DOMAIN-SUFFIX,jetbrains.com,PROXY
-  - - DOMAIN-SUFFIX,sourceforge.net,PROXY
-  - - DOMAIN-SUFFIX,repo1.maven.org,PROXY
-  - - DOMAIN-SUFFIX,pypi.org,PROXY
-  - - DOMAIN-SUFFIX,pythonhosted.org,PROXY
-  - - DOMAIN-SUFFIX,crates.io,PROXY
-  - - DOMAIN-SUFFIX,nuget.org,PROXY
-  - - DOMAIN-SUFFIX,proxy.golang.org,PROXY
-  - - DOMAIN-SUFFIX,golang.org,PROXY
-  - - DOMAIN-SUFFIX,go.dev,PROXY
-  - - DOMAIN-SUFFIX,rust-lang.org,PROXY
-  - - DOMAIN-SUFFIX,homebrew.sh,PROXY
-  - - DOMAIN-SUFFIX,anaconda.com,PROXY
-  - - DOMAIN-SUFFIX,cloudflare.com,PROXY
-  - - DOMAIN-SUFFIX,workers.dev,PROXY
-  - - DOMAIN-SUFFIX,pages.dev,PROXY
-  - - DOMAIN-SUFFIX,vercel.com,PROXY
-  - - DOMAIN-SUFFIX,vercel.app,PROXY
-  - - DOMAIN-SUFFIX,netlify.com,PROXY
-  - - DOMAIN-SUFFIX,herokuapp.com,PROXY
-  - - DOMAIN-SUFFIX,digitalocean.com,PROXY
-  - - DOMAIN-SUFFIX,vultr.com,PROXY
-  - - DOMAIN-SUFFIX,godaddy.com,PROXY
-  - - DOMAIN-SUFFIX,namecheap.com,PROXY
-  - - DOMAIN-SUFFIX,arxiv.org,PROXY
-  # ----- 邮箱 / 办公 / 协作(仅海外;国内邮箱见直连段)-----
-  - - DOMAIN-SUFFIX,proton.me,PROXY
-  - - DOMAIN-SUFFIX,protonmail.com,PROXY
-  - - DOMAIN-SUFFIX,fastmail.com,PROXY
-  - - DOMAIN-SUFFIX,zoho.com,PROXY
-  - - DOMAIN-SUFFIX,figma.com,PROXY
-  - - DOMAIN-SUFFIX,slack.com,PROXY
-  - - DOMAIN-SUFFIX,miro.com,PROXY
-  - - DOMAIN-SUFFIX,linear.app,PROXY
-  - - DOMAIN-SUFFIX,notion.so,PROXY
-  - - DOMAIN-SUFFIX,notion.site,PROXY
-  - - DOMAIN-SUFFIX,airtable.com,PROXY
-  - - DOMAIN-SUFFIX,trello.com,PROXY
-  - - DOMAIN-SUFFIX,asana.com,PROXY
-  - - DOMAIN-SUFFIX,atlassian.com,PROXY
-  - - DOMAIN-SUFFIX,dropbox.com,PROXY
-  - - DOMAIN-SUFFIX,dropboxstatic.com,PROXY
-  - - DOMAIN-SUFFIX,getdropbox.com,PROXY
-  - - DOMAIN-SUFFIX,box.com,PROXY
-  # ----- 飞书海外版 Lark(走代理)-----
-  - - DOMAIN-SUFFIX,larksuite.com,PROXY
-  - - DOMAIN-SUFFIX,lark.com,PROXY
-  # ----- 购物 / 支付 / 出行 -----
-  - - DOMAIN-SUFFIX,amazon.com,PROXY
-  - - DOMAIN-SUFFIX,amazonaws.com,PROXY
-  - - DOMAIN-SUFFIX,ebay.com,PROXY
-  - - DOMAIN-SUFFIX,etsy.com,PROXY
-  - - DOMAIN-SUFFIX,shopify.com,PROXY
-  - - DOMAIN-SUFFIX,paypal.com,PROXY
-  - - DOMAIN-SUFFIX,stripe.com,PROXY
-  - - DOMAIN-SUFFIX,wise.com,PROXY
-  - - DOMAIN-SUFFIX,airbnb.com,PROXY
-  - - DOMAIN-SUFFIX,booking.com,PROXY
-  - - DOMAIN-SUFFIX,expedia.com,PROXY
-  - - DOMAIN-SUFFIX,tripadvisor.com,PROXY
-  - - DOMAIN-SUFFIX,uber.com,PROXY
-  - - DOMAIN-SUFFIX,lyft.com,PROXY
-  - - DOMAIN-SUFFIX,yelp.com,PROXY
-  - - DOMAIN-SUFFIX,walmart.com,PROXY
-  - - DOMAIN-SUFFIX,bestbuy.com,PROXY
-  # ----- 游戏 -----
-  - - DOMAIN-SUFFIX,steampowered.com,直连优先
-  - - DOMAIN-SUFFIX,steamcontent.com,直连优先
-  - - DOMAIN-SUFFIX,s.team,直连优先
-  - - DOMAIN-SUFFIX,steam-chat.com,直连优先
-  - - DOMAIN-SUFFIX,steamgames.com,直连优先
-  - - DOMAIN-SUFFIX,valvesoftware.com,直连优先
-  - - DOMAIN-SUFFIX,steamcommunity.com,直连优先
-  - - DOMAIN-SUFFIX,steamstatic.com,直连优先
-  - - DOMAIN-SUFFIX,epicgames.com,PROXY
-  - - DOMAIN-SUFFIX,ea.com,PROXY
-  - - DOMAIN-SUFFIX,ubisoft.com,PROXY
-  # ----- 游戏厂商补充(对战平台/账号体系,强制代理)-----
-  - - DOMAIN-SUFFIX,activision.com,PROXY
-  - - DOMAIN-SUFFIX,callofduty.com,PROXY
-  - - DOMAIN-SUFFIX,2k.com,PROXY
-  - - DOMAIN-SUFFIX,cdprojektred.com,PROXY
-  - - DOMAIN-SUFFIX,sega.com,PROXY
-  - - DOMAIN-SUFFIX,capcom.com,PROXY
-  - - DOMAIN-SUFFIX,konami.com,PROXY
-  - - DOMAIN-SUFFIX,square-enix.com,PROXY
-  - - DOMAIN-SUFFIX,bandainamcoent.com,PROXY
-  - - DOMAIN-SUFFIX,hoyoverse.com,PROXY
-  - - DOMAIN-SUFFIX,bethesda.net,PROXY
-  - - DOMAIN-SUFFIX,take2games.com,PROXY
-  - - DOMAIN-SUFFIX,battle.net,PROXY
-  - - DOMAIN-SUFFIX,rockstargames.com,PROXY
-  - - DOMAIN-SUFFIX,roblox.com,PROXY
-  - - DOMAIN-SUFFIX,minecraft.net,PROXY
-  - - DOMAIN-SUFFIX,playstation.com,PROXY
-  - - DOMAIN-SUFFIX,nintendo.com,PROXY
-  - - DOMAIN-SUFFIX,riotgames.com,PROXY
-  # ----- 其他常用 -----
-  - - DOMAIN-SUFFIX,wikipedia.org,PROXY
-  - - DOMAIN-SUFFIX,wikimedia.org,PROXY
-  - - DOMAIN-SUFFIX,archive.org,PROXY
-  - - DOMAIN-SUFFIX,imgur.com,PROXY
-  - - DOMAIN-SUFFIX,pixiv.net,PROXY
-  - - DOMAIN-SUFFIX,deviantart.com,PROXY
-  - - DOMAIN-SUFFIX,flickr.com,PROXY
-  - - DOMAIN-SUFFIX,behance.net,PROXY
-  - - DOMAIN-SUFFIX,dribbble.com,PROXY
-  - - DOMAIN-SUFFIX,producthunt.com,PROXY
-  - - DOMAIN-SUFFIX,kickstarter.com,PROXY
-  - - DOMAIN-SUFFIX,indiegogo.com,PROXY
-  # ----- AI 补充 -----
   - - DOMAIN-SUFFIX,groq.com,PROXY
   - - DOMAIN-SUFFIX,mistral.ai,PROXY
   - - DOMAIN-SUFFIX,together.ai,PROXY
   - - DOMAIN-SUFFIX,fireworks.ai,PROXY
   - - DOMAIN-SUFFIX,replicate.com,PROXY
   - - DOMAIN-SUFFIX,stability.ai,PROXY
-  - - DOMAIN-SUFFIX,replit.com,直连优先
-  - - DOMAIN-SUFFIX,kaggle.com,直连优先
+  - - DOMAIN-SUFFIX,lumalabs.ai,PROXY
+  - - DOMAIN-SUFFIX,pika.art,PROXY
+  - - DOMAIN-SUFFIX,adobe.com,PROXY
+  - - DOMAIN-SUFFIX,nvidia.com,PROXY
+  - - DOMAIN-SUFFIX,capcut.com,PROXY
+  - - DOMAIN-SUFFIX,udio.com,PROXY
+  - - DOMAIN-SUFFIX,civitai.com,PROXY
+  - - DOMAIN-SUFFIX,leonardo.ai,PROXY
+  - - DOMAIN-SUFFIX,ideogram.ai,PROXY
+  - - DOMAIN-SUFFIX,krea.ai,PROXY
+  - - DOMAIN-SUFFIX,blackforestlabs.ai,PROXY
+  - - DOMAIN-SUFFIX,recraft.ai,PROXY
+  - - DOMAIN-SUFFIX,fal.ai,PROXY
+  - - DOMAIN-SUFFIX,pollinations.ai,PROXY
+  - - DOMAIN-SUFFIX,getimg.ai,PROXY
+  - - DOMAIN-SUFFIX,magnific.ai,PROXY
+  - - DOMAIN-SUFFIX,artbreeder.com,PROXY
+  - - DOMAIN-SUFFIX,dreamstudio.ai,PROXY
+  - - DOMAIN-SUFFIX,playground.com,PROXY
+  - - DOMAIN-SUFFIX,pixai.art,PROXY
+  - - DOMAIN-SUFFIX,tensor.art,PROXY
   - - DOMAIN-SUFFIX,heygen.com,PROXY
   - - DOMAIN-SUFFIX,gamma.app,PROXY
-  - - DOMAIN-SUFFIX,ideogram.ai,PROXY
-  - - DOMAIN-SUFFIX,lumalabs.ai,PROXY
-  - - DOMAIN-SUFFIX,leonardo.ai,PROXY
-  - - DOMAIN-SUFFIX,pika.art,PROXY
-  # ----- 搜索 / 门户 -----
-  - - DOMAIN-SUFFIX,yahoo.com,PROXY
-  - - DOMAIN-SUFFIX,duckduckgo.com,直连优先
-  - - DOMAIN-SUFFIX,brave.com,直连优先
-  # ----- 社交补充 -----
-  - - DOMAIN-SUFFIX,threads.net,PROXY
-  - - DOMAIN-SUFFIX,bsky.app,PROXY
-  - - DOMAIN-SUFFIX,kick.com,PROXY
-  - - DOMAIN-SUFFIX,line.me,PROXY
-  - - DOMAIN-SUFFIX,rumble.com,PROXY
-  # ----- 流媒体补充 -----
-  - - DOMAIN-SUFFIX,paramountplus.com,PROXY
-  - - DOMAIN-SUFFIX,peacocktv.com,PROXY
-  - - DOMAIN-SUFFIX,bandcamp.com,PROXY
-  - - DOMAIN-SUFFIX,tubitv.com,PROXY
-  - - DOMAIN-SUFFIX,stremio.com,PROXY
-  - - DOMAIN-SUFFIX,plex.tv,PROXY
-  # ----- 科技媒体 / 资讯补充 -----
-  - - DOMAIN-SUFFIX,theverge.com,直连优先
-  - - DOMAIN-SUFFIX,techcrunch.com,直连优先
-  - - DOMAIN-SUFFIX,wired.com,直连优先
-  - - DOMAIN-SUFFIX,arstechnica.com,直连优先
-  - - DOMAIN-SUFFIX,cnbc.com,PROXY
-  - - DOMAIN-SUFFIX,businessinsider.com,PROXY
-  - - DOMAIN-SUFFIX,apnews.com,直连优先
-  - - DOMAIN-SUFFIX,imdb.com,直连优先
-  - - DOMAIN-SUFFIX,goodreads.com,直连优先
-  - - DOMAIN-SUFFIX,audible.com,直连优先
-  # ----- 购物补充 -----
-  - - DOMAIN-SUFFIX,aliexpress.com,直连优先
-  - - DOMAIN-SUFFIX,temu.com,直连优先
-  - - DOMAIN-SUFFIX,shein.com,直连优先
-  - - DOMAIN-SUFFIX,gumroad.com,直连优先
-  # ----- 金融 / 加密货币 -----
+  - - DOMAIN-SUFFIX,descript.com,PROXY
+  - - DOMAIN-SUFFIX,veed.io,PROXY
+  - - DOMAIN-SUFFIX,synthesia.io,PROXY
+  - - DOMAIN-SUFFIX,d-id.com,PROXY
+  - - DOMAIN-SUFFIX,opus.pro,PROXY
+  - - DOMAIN-SUFFIX,fliki.ai,PROXY
+  - - DOMAIN-SUFFIX,aiva.ai,PROXY
+  - - DOMAIN-SUFFIX,mubert.com,PROXY
+  - - DOMAIN-SUFFIX,replit.com,PROXY
+  - - DOMAIN-SUFFIX,kaggle.com,PROXY
+  - - DOMAIN-SUFFIX,dashscope-intl.aliyuncs.com,PROXY
+  - - DOMAIN-SUFFIX,alibabacloud.com,PROXY
+  - - DOMAIN-SUFFIX,z.ai,PROXY
+  - - DOMAIN-SUFFIX,minimax.io,PROXY
+  - - DOMAIN-SUFFIX,moonshot.ai,PROXY
+  - - DOMAIN-SUFFIX,byteplus.com,PROXY
+  - - DOMAIN-SUFFIX,tencentcloud.com,PROXY
+  - - DOMAIN-SUFFIX,siliconflow.com,PROXY
   - - DOMAIN-SUFFIX,binance.com,PROXY
-  # Polymarket(预测市场,封禁大陆 IP,强制代理)
+  - - DOMAIN-SUFFIX,coinbase.com,PROXY
+  - - DOMAIN-SUFFIX,okx.com,PROXY
+  - - DOMAIN-SUFFIX,bybit.com,PROXY
+  - - DOMAIN-SUFFIX,kraken.com,PROXY
+  - - DOMAIN-SUFFIX,coinmarketcap.com,PROXY
+  - - DOMAIN-SUFFIX,coingecko.com,PROXY
+  - - DOMAIN-SUFFIX,tradingview.com,PROXY
+  - - DOMAIN-SUFFIX,investing.com,PROXY
   - - DOMAIN-SUFFIX,polymarket.com,PROXY
-  # ----- 金融网站补充(财经媒体/数据/券商,强制代理)-----
   - - DOMAIN-SUFFIX,marketwatch.com,PROXY
   - - DOMAIN-SUFFIX,barrons.com,PROXY
   - - DOMAIN-SUFFIX,fortune.com,PROXY
@@ -425,191 +181,14 @@ prepend-rules:
   - - DOMAIN-SUFFIX,thestreet.com,PROXY
   - - DOMAIN-SUFFIX,fool.com,PROXY
   - - DOMAIN-SUFFIX,statista.com,PROXY
-  - - DOMAIN-SUFFIX,coinbase.com,PROXY
-  - - DOMAIN-SUFFIX,okx.com,PROXY
-  - - DOMAIN-SUFFIX,bybit.com,PROXY
-  - - DOMAIN-SUFFIX,kraken.com,PROXY
-  - - DOMAIN-SUFFIX,coinmarketcap.com,PROXY
-  - - DOMAIN-SUFFIX,coingecko.com,PROXY
-  - - DOMAIN-SUFFIX,tradingview.com,PROXY
-  - - DOMAIN-SUFFIX,investing.com,PROXY
-  # ----- 在线学习 -----
-  - - DOMAIN-SUFFIX,coursera.org,直连优先
-  - - DOMAIN-SUFFIX,udemy.com,直连优先
-  - - DOMAIN-SUFFIX,duolingo.com,直连优先
-  - - DOMAIN-SUFFIX,codecademy.com,直连优先
-  - - DOMAIN-SUFFIX,khanacademy.org,直连优先
-  - - DOMAIN-SUFFIX,freecodecamp.org,直连优先
-  - - DOMAIN-SUFFIX,leetcode.com,直连优先
-  - - DOMAIN-SUFFIX,overleaf.com,直连优先
-  - - DOMAIN-SUFFIX,researchgate.net,直连优先
-  # ----- 效率工具补充 -----
-  - - DOMAIN-SUFFIX,deepl.com,直连优先
-  - - DOMAIN-SUFFIX,canva.com,直连优先
-  - - DOMAIN-SUFFIX,grammarly.com,直连优先
-  - - DOMAIN-SUFFIX,wetransfer.com,直连优先
-  - - DOMAIN-SUFFIX,mega.nz,直连优先
-  - - DOMAIN-SUFFIX,1password.com,直连优先
-  - - DOMAIN-SUFFIX,todoist.com,直连优先
-  - - DOMAIN-SUFFIX,evernote.com,直连优先
-  - - DOMAIN-SUFFIX,wordpress.com,直连优先
-  - - DOMAIN-SUFFIX,substack.com,直连优先
-  - - DOMAIN-SUFFIX,dev.to,直连优先
-  - - DOMAIN-SUFFIX,postman.com,直连优先
-  - - DOMAIN-SUFFIX,sentry.io,直连优先
-  - - DOMAIN-SUFFIX,supabase.com,直连优先
-  - - DOMAIN-SUFFIX,mongodb.com,直连优先
-  - - DOMAIN-SUFFIX,oracle.com,直连优先
-  - - DOMAIN-SUFFIX,hetzner.com,直连优先
-  - - DOMAIN-SUFFIX,ycombinator.com,直连优先
-  # ----- 游戏补充 -----
-  - - DOMAIN-SUFFIX,gog.com,直连优先
-  - - DOMAIN-SUFFIX,itch.io,直连优先
-  - - DOMAIN-SUFFIX,humblebundle.com,直连优先
-  # ----- VPS / VPN 供应商 -----
-  - - DOMAIN-SUFFIX,justmysocks.net,直连优先
-  - - DOMAIN-SUFFIX,bandwagonhost.com,直连优先
-  - - DOMAIN-SUFFIX,nordvpn.com,直连优先
-  - - DOMAIN-SUFFIX,expressvpn.com,直连优先
-  - - DOMAIN-SUFFIX,surfshark.com,直连优先
-  - - DOMAIN-SUFFIX,mullvad.net,直连优先
-  - - DOMAIN-SUFFIX,windscribe.com,直连优先
-  - - DOMAIN-SUFFIX,privateinternetaccess.com,直连优先
-  - - DOMAIN-SUFFIX,cyberghostvpn.com,直连优先
-  - - DOMAIN-SUFFIX,tunnelbear.com,直连优先
-  - - DOMAIN-SUFFIX,ipvanish.com,直连优先
-  - - DOMAIN-SUFFIX,racknerd.com,直连优先
-  - - DOMAIN-SUFFIX,contabo.com,直连优先
-  - - DOMAIN-SUFFIX,ovh.com,直连优先
-  - - DOMAIN-SUFFIX,scaleway.com,直连优先
-  # ----- 用户指定 -----
-  - - DOMAIN-SUFFIX,360buyimg.men,直连优先
-  # ----- 境内被干扰站点(DNS 污染/干扰,兜底自动代理)-----
-  - - DOMAIN-SUFFIX,linux.do,直连优先
-  - - DOMAIN-SUFFIX,jsdelivr.net,直连优先
-  - - DOMAIN-SUFFIX,unpkg.com,直连优先
-  - - DOMAIN-SUFFIX,esm.sh,直连优先
-  # ----- 画师 / 设计 / 素材站点(兜底:能直连就直连,不通自动代理)-----
-  - - DOMAIN-SUFFIX,artstation.com,直连优先
-  - - DOMAIN-SUFFIX,civitai.com,PROXY
-  - - DOMAIN-SUFFIX,unsplash.com,直连优先
-  - - DOMAIN-SUFFIX,pexels.com,直连优先
-  - - DOMAIN-SUFFIX,pixabay.com,直连优先
-  - - DOMAIN-SUFFIX,shutterstock.com,直连优先
-  - - DOMAIN-SUFFIX,gettyimages.com,直连优先
-  - - DOMAIN-SUFFIX,500px.com,直连优先
-  - - DOMAIN-SUFFIX,zerochan.net,直连优先
-  - - DOMAIN-SUFFIX,danbooru.donmai.us,直连优先
-  - - DOMAIN-SUFFIX,sankakucomplex.com,直连优先
-  - - DOMAIN-SUFFIX,yande.re,直连优先
-  - - DOMAIN-SUFFIX,wallhaven.cc,直连优先
-  - - DOMAIN-SUFFIX,newgrounds.com,直连优先
-  - - DOMAIN-SUFFIX,cara.app,直连优先
-  - - DOMAIN-SUFFIX,saucenao.com,直连优先
-  - - DOMAIN-SUFFIX,sketchfab.com,直连优先
-  - - DOMAIN-SUFFIX,dafont.com,直连优先
-  - - DOMAIN-SUFFIX,coolors.co,直连优先
-  - - DOMAIN-SUFFIX,colorhunt.co,直连优先
-  - - DOMAIN-SUFFIX,textures.com,直连优先
-  - - DOMAIN-SUFFIX,ambientcg.com,直连优先
-  - - DOMAIN-SUFFIX,picarto.tv,直连优先
-  - - DOMAIN-SUFFIX,9gag.com,直连优先
-  - - DOMAIN-SUFFIX,patreon.com,PROXY
-  # ----- 境内被干扰站点补充 -----
-  - - DOMAIN-SUFFIX,gravatar.com,直连优先
-  - - DOMAIN-SUFFIX,disqus.com,直连优先
-  - - DOMAIN-SUFFIX,torproject.org,直连优先
-  - - DOMAIN-SUFFIX,4chan.org,直连优先
-  - - DOMAIN-SUFFIX,mastodon.social,直连优先
-  - - DOMAIN-SUFFIX,ipfs.io,直连优先
-  # ----- 购物补充(大牌官网,兜底)-----
-  - - DOMAIN-SUFFIX,target.com,直连优先
-  - - DOMAIN-SUFFIX,costco.com,直连优先
-  - - DOMAIN-SUFFIX,ikea.com,直连优先
-  - - DOMAIN-SUFFIX,nike.com,直连优先
-  - - DOMAIN-SUFFIX,samsung.com,直连优先
-  # ----- 关联域名补充(主站/登录) -----
-  - - DOMAIN-SUFFIX,oai.ai,PROXY
-  - - DOMAIN-SUFFIX,youtu.be,PROXY
-  - - DOMAIN-SUFFIX,youtube-nocookie.com,PROXY
-  - - DOMAIN-SUFFIX,googlesyndication.com,PROXY
-  - - DOMAIN-SUFFIX,gmail.com,PROXY
-  - - DOMAIN-SUFFIX,msauth.net,PROXY
-  - - DOMAIN-SUFFIX,msidentity.com,PROXY
-  - - DOMAIN-SUFFIX,msftidentity.com,PROXY
-  - - DOMAIN-SUFFIX,office.net,PROXY
-  - - DOMAIN-SUFFIX,hotmail.com,PROXY
-  - - DOMAIN-SUFFIX,xbox.com,PROXY
-  - - DOMAIN-SUFFIX,powerbi.com,PROXY
-  - - DOMAIN-SUFFIX,github.io,直连优先
-  - - DOMAIN-SUFFIX,githubassets.com,直连优先
-  - - DOMAIN-SUFFIX,githubcopilot.com,直连优先
-  - - DOMAIN-SUFFIX,blizzard.com,PROXY
-  - - DOMAIN-SUFFIX,epicgames.dev,PROXY
-  - - DOMAIN-SUFFIX,unrealengine.com,PROXY
-  # ----- 关联域名补充(CDN/资源,兜底) -----
-  - - DOMAIN-SUFFIX,cloudflare.net,PROXY
-  - - DOMAIN-SUFFIX,r2.dev,PROXY
-  - - DOMAIN-SUFFIX,cloudfront.net,直连优先
-  - - DOMAIN-SUFFIX,netlify.app,直连优先
-  - - DOMAIN-SUFFIX,gitlab.io,直连优先
-  - - DOMAIN-SUFFIX,discordapp.net,PROXY
-  - - DOMAIN-SUFFIX,redditmedia.com,PROXY
-  - - DOMAIN-SUFFIX,redditstatic.com,PROXY
-  - - DOMAIN-SUFFIX,x.ai,PROXY
-  - - DOMAIN-SUFFIX,facebook.net,PROXY
-  - - DOMAIN-SUFFIX,fb.com,PROXY
-  - - DOMAIN-SUFFIX,meta.com,PROXY
-  - - DOMAIN-SUFFIX,cdninstagram.com,PROXY
-  - - DOMAIN-SUFFIX,whatsapp.net,PROXY
-  - - DOMAIN-SUFFIX,tiktokv.com,PROXY
-  - - DOMAIN-SUFFIX,byteoversea.com,PROXY
-  - - DOMAIN-SUFFIX,ibytedtos.com,PROXY
-  - - DOMAIN-SUFFIX,nflximg.net,PROXY
-  - - DOMAIN-SUFFIX,spotifycdn.com,PROXY
-  - - DOMAIN-SUFFIX,twitchcdn.net,PROXY
-  - - DOMAIN-SUFFIX,jtvnw.net,PROXY
-  - - DOMAIN-SUFFIX,pximg.net,直连优先
-  - - DOMAIN-SUFFIX,deviantart.net,直连优先
-  - - DOMAIN-SUFFIX,mediumcdn.com,直连优先
-  - - DOMAIN-SUFFIX,quoracdn.net,直连优先
-  - - DOMAIN-SUFFIX,licdn.com,直连优先
-  - - DOMAIN-SUFFIX,pinimg.com,直连优先
-  - - DOMAIN-SUFFIX,fastly.net,直连优先
-  - - DOMAIN-SUFFIX,protonvpn.com,直连优先
-  - - DOMAIN-SUFFIX,phncdn.com,PROXY
-  # ----- AI 创作平台补充 -----
-  - - DOMAIN-SUFFIX,blackforestlabs.ai,PROXY
-  - - DOMAIN-SUFFIX,krea.ai,PROXY
-  - - DOMAIN-SUFFIX,recraft.ai,PROXY
-  - - DOMAIN-SUFFIX,fal.ai,PROXY
-  - - DOMAIN-SUFFIX,pollinations.ai,PROXY
-  - - DOMAIN-SUFFIX,adobe.com,PROXY
-  - - DOMAIN-SUFFIX,nvidia.com,直连优先
-  - - DOMAIN-SUFFIX,capcut.com,PROXY
-  - - DOMAIN-SUFFIX,udio.com,PROXY
-  - - DOMAIN-SUFFIX,tensor.art,PROXY
-  - - DOMAIN-SUFFIX,pixai.art,PROXY
-  - - DOMAIN-SUFFIX,playground.com,PROXY
-  - - DOMAIN-SUFFIX,dreamstudio.ai,PROXY
-  - - DOMAIN-SUFFIX,magnific.ai,PROXY
-  - - DOMAIN-SUFFIX,artbreeder.com,PROXY
-  - - DOMAIN-SUFFIX,descript.com,PROXY
-  - - DOMAIN-SUFFIX,veed.io,PROXY
-  # ----- AI 创作平台补充 2(兜底)-----
-  - - DOMAIN-SUFFIX,getimg.ai,PROXY
-  - - DOMAIN-SUFFIX,synthesia.io,PROXY
-  - - DOMAIN-SUFFIX,d-id.com,PROXY
-  - - DOMAIN-SUFFIX,opus.pro,PROXY
-  - - DOMAIN-SUFFIX,fliki.ai,PROXY
-  - - DOMAIN-SUFFIX,aiva.ai,PROXY
-  - - DOMAIN-SUFFIX,mubert.com,PROXY
-  - - DOMAIN-SUFFIX,cgtrader.com,直连优先
-  - - DOMAIN-SUFFIX,turbosquid.com,直连优先
-  - - DOMAIN-SUFFIX,polyhaven.com,直连优先
-  - - DOMAIN-SUFFIX,photoroom.com,直连优先
-  - - DOMAIN-SUFFIX,fotor.com,直连优先
-  # ----- 军事 / 防务网站(强制代理)-----
+  - - DOMAIN-SUFFIX,yahoo.com,PROXY
+  - - DOMAIN-SUFFIX,cnbc.com,PROXY
+  - - DOMAIN-SUFFIX,businessinsider.com,PROXY
+  - - DOMAIN-SUFFIX,kalshi.com,PROXY
+  - - DOMAIN-SUFFIX,manifold.markets,PROXY
+  - - DOMAIN-SUFFIX,remitly.com,PROXY
+  - - DOMAIN-SUFFIX,westernunion.com,PROXY
+  - - DOMAIN-SUFFIX,revolut.com,PROXY
   - - DOMAIN-SUFFIX,thewarzone.com,PROXY
   - - DOMAIN-SUFFIX,thedrive.com,PROXY
   - - DOMAIN-SUFFIX,military.com,PROXY
@@ -635,76 +214,6 @@ prepend-rules:
   - - DOMAIN-SUFFIX,bae.com,PROXY
   - - DOMAIN-SUFFIX,saab.com,PROXY
   - - DOMAIN-SUFFIX,thalesgroup.com,PROXY
-  # ----- 影视信息/资源站(不封 IP,直连优先兜底)-----
-  - - DOMAIN-SUFFIX,themoviedb.org,直连优先
-  - - DOMAIN-SUFFIX,tvdb.com,直连优先
-  - - DOMAIN-SUFFIX,kpkuang.com,直连优先
-  - - DOMAIN-SUFFIX,aiyifan.tv,直连优先
-  - - DOMAIN-SUFFIX,aiyifan.com,直连优先
-  # ----- 遗漏补充(强制代理)-----
-  - - DOMAIN-SUFFIX,vk.com,PROXY
-  - - DOMAIN-SUFFIX,kakao.com,PROXY
-  - - DOMAIN-SUFFIX,viber.com,PROXY
-  - - DOMAIN-SUFFIX,mubi.com,PROXY
-  - - DOMAIN-SUFFIX,pluto.tv,PROXY
-  - - DOMAIN-SUFFIX,qobuz.com,PROXY
-  - - DOMAIN-SUFFIX,pandora.com,PROXY
-  - - DOMAIN-SUFFIX,last.fm,PROXY
-  - - DOMAIN-SUFFIX,genius.com,PROXY
-  - - DOMAIN-SUFFIX,kalshi.com,PROXY
-  - - DOMAIN-SUFFIX,manifold.markets,PROXY
-  - - DOMAIN-SUFFIX,remitly.com,PROXY
-  - - DOMAIN-SUFFIX,westernunion.com,PROXY
-  - - DOMAIN-SUFFIX,revolut.com,PROXY
-  - - DOMAIN-SUFFIX,yandex.com,PROXY
-  - - DOMAIN-SUFFIX,naver.com,PROXY
-  - - DOMAIN-SUFFIX,usatoday.com,PROXY
-  - - DOMAIN-SUFFIX,foxnews.com,PROXY
-  - - DOMAIN-SUFFIX,msnbc.com,PROXY
-  - - DOMAIN-SUFFIX,cbsnews.com,PROXY
-  - - DOMAIN-SUFFIX,nbcnews.com,PROXY
-  - - DOMAIN-SUFFIX,theatlantic.com,PROXY
-  - - DOMAIN-SUFFIX,newyorker.com,PROXY
-  - - DOMAIN-SUFFIX,politico.com,PROXY
-  - - DOMAIN-SUFFIX,thehill.com,PROXY
-  - - DOMAIN-SUFFIX,dailymail.co.uk,PROXY
-  - - DOMAIN-SUFFIX,scmp.com,PROXY
-  - - DOMAIN-SUFFIX,vox.com,PROXY
-  - - DOMAIN-SUFFIX,vice.com,PROXY
-  # ----- 遗漏补充(直连优先兜底)-----
-  - - DOMAIN-SUFFIX,render.com,直连优先
-  - - DOMAIN-SUFFIX,railway.app,直连优先
-  - - DOMAIN-SUFFIX,fly.io,直连优先
-  - - DOMAIN-SUFFIX,ghost.org,直连优先
-  - - DOMAIN-SUFFIX,hashnode.com,直连优先
-  - - DOMAIN-SUFFIX,codeberg.org,直连优先
-  - - DOMAIN-SUFFIX,cohere.com,直连优先
-  - - DOMAIN-SUFFIX,lmarena.ai,直连优先
-  - - DOMAIN-SUFFIX,vast.ai,直连优先
-  - - DOMAIN-SUFFIX,runpod.io,直连优先
-  - - DOMAIN-SUFFIX,modal.com,直连优先
-  - - DOMAIN-SUFFIX,cerebras.ai,直连优先
-  - - DOMAIN-SUFFIX,monday.com,直连优先
-  - - DOMAIN-SUFFIX,salesforce.com,直连优先
-  - - DOMAIN-SUFFIX,zendesk.com,直连优先
-  - - DOMAIN-SUFFIX,hubspot.com,直连优先
-  - - DOMAIN-SUFFIX,basecamp.com,直连优先
-  - - DOMAIN-SUFFIX,coda.io,直连优先
-  - - DOMAIN-SUFFIX,wix.com,直连优先
-  - - DOMAIN-SUFFIX,squarespace.com,直连优先
-  - - DOMAIN-SUFFIX,framer.com,直连优先
-  - - DOMAIN-SUFFIX,webflow.com,直连优先
-  - - DOMAIN-SUFFIX,sketch.com,直连优先
-  - - DOMAIN-SUFFIX,zara.com,直连优先
-  - - DOMAIN-SUFFIX,hm.com,直连优先
-  - - DOMAIN-SUFFIX,uniqlo.com,直连优先
-  - - DOMAIN-SUFFIX,adidas.com,直连优先
-  - - DOMAIN-SUFFIX,wish.com,直连优先
-  - - DOMAIN-SUFFIX,newegg.com,直连优先
-  - - DOMAIN-SUFFIX,ko-fi.com,直连优先
-  - - DOMAIN-SUFFIX,jellyfin.org,直连优先
-  - - DOMAIN-SUFFIX,emby.media,直连优先
-  # ----- 短链接服务(强制代理)-----
   - - DOMAIN-SUFFIX,g.co,PROXY
   - - DOMAIN-SUFFIX,fb.me,PROXY
   - - DOMAIN-SUFFIX,m.me,PROXY
@@ -722,37 +231,35 @@ prepend-rules:
   - - DOMAIN-SUFFIX,ow.ly,PROXY
   - - DOMAIN-SUFFIX,buff.ly,PROXY
   - - DOMAIN-SUFFIX,rb.gy,PROXY
-  # ----- 平台关联域名(封IP平台生态,强制代理)-----
-  - - DOMAIN-SUFFIX,fbsbx.com,PROXY
-  - - DOMAIN-SUFFIX,nflxext.com,PROXY
-  - - DOMAIN-SUFFIX,muscdn.com,PROXY
-  - - DOMAIN-SUFFIX,paypalobjects.com,PROXY
-  # ----- 平台关联域名(无封禁,兜底)-----
-  - - DOMAIN-SUFFIX,dropboxusercontent.com,直连优先
-  - - DOMAIN-SUFFIX,mega.co.nz,直连优先
-  - - DOMAIN-SUFFIX,transferwise.com,直连优先
-  - - DOMAIN-SUFFIX,teamviewer.com,直连优先
-  - - DOMAIN-SUFFIX,anydesk.com,直连优先
-  # ----- 全面检查补充(强制代理)-----
-  - - DOMAIN-SUFFIX,msauthimages.net,PROXY
-  - - DOMAIN-SUFFIX,passport.net,PROXY
-  - - DOMAIN-SUFFIX,aol.com,PROXY
-  # ----- 全面检查补充(兜底)-----
-  - - DOMAIN-SUFFIX,akamai.net,直连优先
-  - - DOMAIN-SUFFIX,akamaized.net,直连优先
-  - - DOMAIN-SUFFIX,cdnjs.cloudflare.com,直连优先
-  - - DOMAIN-SUFFIX,linode.com,直连优先
-  - - DOMAIN-SUFFIX,zoom.us,直连优先
-  - - DOMAIN-SUFFIX,indeed.com,直连优先
-  - - DOMAIN-SUFFIX,glassdoor.com,直连优先
-  - - DOMAIN-SUFFIX,upwork.com,直连优先
-  - - DOMAIN-SUFFIX,fiverr.com,直连优先
-  # ----- 俄罗斯网站(强制代理)-----
+  - - DOMAIN-SUFFIX,activision.com,PROXY
+  - - DOMAIN-SUFFIX,callofduty.com,PROXY
+  - - DOMAIN-SUFFIX,2k.com,PROXY
+  - - DOMAIN-SUFFIX,cdprojektred.com,PROXY
+  - - DOMAIN-SUFFIX,sega.com,PROXY
+  - - DOMAIN-SUFFIX,capcom.com,PROXY
+  - - DOMAIN-SUFFIX,konami.com,PROXY
+  - - DOMAIN-SUFFIX,square-enix.com,PROXY
+  - - DOMAIN-SUFFIX,bandainamcoent.com,PROXY
+  - - DOMAIN-SUFFIX,hoyoverse.com,PROXY
+  - - DOMAIN-SUFFIX,bethesda.net,PROXY
+  - - DOMAIN-SUFFIX,take2games.com,PROXY
+  - - DOMAIN-SUFFIX,battle.net,PROXY
+  - - DOMAIN-SUFFIX,blizzard.com,PROXY
+  - - DOMAIN-SUFFIX,epicgames.dev,PROXY
+  - - DOMAIN-SUFFIX,unrealengine.com,PROXY
+  - - DOMAIN-SUFFIX,trovo.live,PROXY
+  - - DOMAIN-SUFFIX,nimo.tv,PROXY
+  - - DOMAIN-SUFFIX,afreecatv.com,PROXY
+  - - DOMAIN-SUFFIX,bigo.tv,PROXY
+  - - DOMAIN-SUFFIX,dlive.tv,PROXY
+  - - DOMAIN-SUFFIX,streamable.com,PROXY
+  - - DOMAIN-SUFFIX,rutube.ru,PROXY
+  - - DOMAIN-SUFFIX,ok.ru,PROXY
+  - - DOMAIN-SUFFIX,yandex.com,PROXY
   - - DOMAIN-SUFFIX,yandex.ru,PROXY
   - - DOMAIN-SUFFIX,yandex.net,PROXY
   - - DOMAIN-SUFFIX,vk.cc,PROXY
   - - DOMAIN-SUFFIX,mail.ru,PROXY
-  # ----- 欧洲媒体(强制代理)-----
   - - DOMAIN-SUFFIX,lemonde.fr,PROXY
   - - DOMAIN-SUFFIX,lefigaro.fr,PROXY
   - - DOMAIN-SUFFIX,elpais.com,PROXY
@@ -760,66 +267,174 @@ prepend-rules:
   - - DOMAIN-SUFFIX,spiegel.de,PROXY
   - - DOMAIN-SUFFIX,zeit.de,PROXY
   - - DOMAIN-SUFFIX,faz.net,PROXY
-  # ----- 欧洲平台(兜底)-----
-  - - DOMAIN-SUFFIX,skyscanner.net,直连优先
-  - - DOMAIN-SUFFIX,ryanair.com,直连优先
-  - - DOMAIN-SUFFIX,easyjet.com,直连优先
-  - - DOMAIN-SUFFIX,lufthansa.com,直连优先
-  - - DOMAIN-SUFFIX,zalando.com,直连优先
-  - - DOMAIN-SUFFIX,asos.com,直连优先
-  - - DOMAIN-SUFFIX,klarna.com,直连优先
-  - - DOMAIN-SUFFIX,n26.com,直连优先
-  - - DOMAIN-SUFFIX,sonarsource.com,直连优先
-  - - DOMAIN-SUFFIX,videolan.org,直连优先
-  - - DOMAIN-SUFFIX,kaspersky.com,直连优先
-  # ----- 港澳台/新日韩/东南亚/中东(强制代理)-----
-  - - DOMAIN-SUFFIX,theinitium.com,直连优先
   - - DOMAIN-SUFFIX,lihkg.com,PROXY
-  - - DOMAIN-SUFFIX,ltn.com.tw,直连优先
-  - - DOMAIN-SUFFIX,thenewslens.com,PROXY
-  - - DOMAIN-SUFFIX,storm.mg,PROXY
   - - DOMAIN-SUFFIX,ptt.cc,PROXY
-  - - DOMAIN-SUFFIX,pixnet.net,直连优先
   - - DOMAIN-SUFFIX,yahoo.co.jp,PROXY
-  - - DOMAIN-SUFFIX,daum.net,直连优先
-  - - DOMAIN-SUFFIX,melon.com,直连优先
-  - - DOMAIN-SUFFIX,zalo.me,直连优先
   - - DOMAIN-SUFFIX,tokopedia.com,PROXY
   - - DOMAIN-SUFFIX,vnexpress.net,PROXY
-  - - DOMAIN-SUFFIX,noon.com,直连优先
   - - DOMAIN-SUFFIX,careem.com,PROXY
   - - DOMAIN-SUFFIX,anghami.com,PROXY
   - - DOMAIN-SUFFIX,shahid.mbc.net,PROXY
   - - DOMAIN-SUFFIX,etoro.com,PROXY
-  # ----- 港澳台/新日韩/东南亚/中东(兜底)-----
-  - - DOMAIN-SUFFIX,mingpao.com,直连优先
-  - - DOMAIN-SUFFIX,hk01.com,直连优先
-  - - DOMAIN-SUFFIX,singtao.com,直连优先
-  - - DOMAIN-SUFFIX,orientaldaily.on.cc,直连优先
-  - - DOMAIN-SUFFIX,tvb.com,直连优先
-  - - DOMAIN-SUFFIX,viu.tv,直连优先
-  - - DOMAIN-SUFFIX,klook.com,直连优先
-  - - DOMAIN-SUFFIX,udn.com,直连优先
-  - - DOMAIN-SUFFIX,cna.com.tw,直连优先
-  - - DOMAIN-SUFFIX,chinatimes.com,直连优先
-  - - DOMAIN-SUFFIX,ettoday.net,直连优先
-  - - DOMAIN-SUFFIX,gamer.com.tw,直连优先
-  - - DOMAIN-SUFFIX,books.com.tw,直连优先
-  - - DOMAIN-SUFFIX,pchome.com.tw,直连优先
-  - - DOMAIN-SUFFIX,momoshop.com.tw,直连优先
-  - - DOMAIN-SUFFIX,eslite.com,直连优先
-  - - DOMAIN-SUFFIX,ruten.com.tw,直连优先
+  - - DOMAIN-SUFFIX,vk.com,PROXY
+  - - DOMAIN-SUFFIX,kakao.com,PROXY
+  - - DOMAIN-SUFFIX,viber.com,PROXY
+  - - DOMAIN-SUFFIX,mubi.com,PROXY
+  - - DOMAIN-SUFFIX,pluto.tv,PROXY
+  - - DOMAIN-SUFFIX,qobuz.com,PROXY
+  - - DOMAIN-SUFFIX,pandora.com,PROXY
+  - - DOMAIN-SUFFIX,last.fm,PROXY
+  - - DOMAIN-SUFFIX,genius.com,PROXY
+  - - DOMAIN-SUFFIX,usatoday.com,PROXY
+  - - DOMAIN-SUFFIX,foxnews.com,PROXY
+  - - DOMAIN-SUFFIX,msnbc.com,PROXY
+  - - DOMAIN-SUFFIX,cbsnews.com,PROXY
+  - - DOMAIN-SUFFIX,nbcnews.com,PROXY
+  - - DOMAIN-SUFFIX,theatlantic.com,PROXY
+  - - DOMAIN-SUFFIX,newyorker.com,PROXY
+  - - DOMAIN-SUFFIX,politico.com,PROXY
+  - - DOMAIN-SUFFIX,thehill.com,PROXY
+  - - DOMAIN-SUFFIX,dailymail.co.uk,PROXY
+  - - DOMAIN-SUFFIX,scmp.com,PROXY
+  - - DOMAIN-SUFFIX,vox.com,PROXY
+  - - DOMAIN-SUFFIX,vice.com,PROXY
+  - - DOMAIN-SUFFIX,fbsbx.com,PROXY
+  - - DOMAIN-SUFFIX,nflxext.com,PROXY
+  - - DOMAIN-SUFFIX,muscdn.com,PROXY
+  - - DOMAIN-SUFFIX,paypalobjects.com,PROXY
+  - - DOMAIN-SUFFIX,msauthimages.net,PROXY
+  - - DOMAIN-SUFFIX,passport.net,PROXY
+  - - DOMAIN-SUFFIX,aol.com,PROXY
+  - - DOMAIN-SUFFIX,dis.gd,PROXY
+  - - DOMAIN-SUFFIX,guilded.gg,PROXY
+  - - DOMAIN-SUFFIX,teamspeak.com,PROXY
+  - - DOMAIN-SUFFIX,element.io,PROXY
+  - - DOMAIN-SUFFIX,twitchcdn.net,PROXY
+  - - DOMAIN-SUFFIX,jtvnw.net,PROXY
+  - - DOMAIN-SUFFIX,threads.net,PROXY
+  - - DOMAIN-SUFFIX,bsky.app,PROXY
+  - - DOMAIN-SUFFIX,kick.com,PROXY
+  - - DOMAIN-SUFFIX,line.me,PROXY
+  - - DOMAIN-SUFFIX,rumble.com,PROXY
+  - - DOMAIN-SUFFIX,facebook.net,PROXY
+  - - DOMAIN-SUFFIX,fb.com,PROXY
+  - - DOMAIN-SUFFIX,meta.com,PROXY
+  - - DOMAIN-SUFFIX,cdninstagram.com,PROXY
+  - - DOMAIN-SUFFIX,whatsapp.net,PROXY
+  - - DOMAIN-SUFFIX,tiktokv.com,PROXY
+  - - DOMAIN-SUFFIX,byteoversea.com,PROXY
+  - - DOMAIN-SUFFIX,ibytedtos.com,PROXY
+  - - DOMAIN-SUFFIX,nflximg.net,PROXY
+  - - DOMAIN-SUFFIX,spotifycdn.com,PROXY
+  - - DOMAIN-SUFFIX,redditmedia.com,PROXY
+  - - DOMAIN-SUFFIX,redditstatic.com,PROXY
+  - - DOMAIN-SUFFIX,discordapp.net,PROXY
+  - - DOMAIN-SUFFIX,phncdn.com,PROXY
+  - - GEOSITE,category-porn,PROXY
+  # ===== 直连优先(关键域名,防 GEOSITE 误代理)=====
+  - - DOMAIN-SUFFIX,github.com,直连优先
+  - - DOMAIN-SUFFIX,github.dev,直连优先
+  - - DOMAIN-SUFFIX,githubstatus.com,直连优先
+  - - DOMAIN-SUFFIX,githubusercontent.com,直连优先
+  - - DOMAIN-SUFFIX,objects.githubusercontent.com,直连优先
+  - - DOMAIN-SUFFIX,codeload.github.com,直连优先
+  - - DOMAIN-SUFFIX,releases.githubusercontent.com,直连优先
+  - - DOMAIN-SUFFIX,ghcr.io,直连优先
+  - - DOMAIN-SUFFIX,github.io,直连优先
+  - - DOMAIN-SUFFIX,githubassets.com,直连优先
+  - - DOMAIN-SUFFIX,githubcopilot.com,直连优先
+  - - DOMAIN-SUFFIX,steampowered.com,直连优先
+  - - DOMAIN-SUFFIX,steamcontent.com,直连优先
+  - - DOMAIN-SUFFIX,s.team,直连优先
+  - - DOMAIN-SUFFIX,steam-chat.com,直连优先
+  - - DOMAIN-SUFFIX,steamgames.com,直连优先
+  - - DOMAIN-SUFFIX,valvesoftware.com,直连优先
+  - - DOMAIN-SUFFIX,steamcommunity.com,直连优先
+  - - DOMAIN-SUFFIX,steamstatic.com,直连优先
+  - - DOMAIN-SUFFIX,justmysocks.net,直连优先
+  - - DOMAIN-SUFFIX,bandwagonhost.com,直连优先
+  - - DOMAIN-SUFFIX,nordvpn.com,直连优先
+  - - DOMAIN-SUFFIX,expressvpn.com,直连优先
+  - - DOMAIN-SUFFIX,surfshark.com,直连优先
+  - - DOMAIN-SUFFIX,mullvad.net,直连优先
+  - - DOMAIN-SUFFIX,windscribe.com,直连优先
+  - - DOMAIN-SUFFIX,privateinternetaccess.com,直连优先
+  - - DOMAIN-SUFFIX,cyberghostvpn.com,直连优先
+  - - DOMAIN-SUFFIX,tunnelbear.com,直连优先
+  - - DOMAIN-SUFFIX,ipvanish.com,直连优先
+  - - DOMAIN-SUFFIX,racknerd.com,直连优先
+  - - DOMAIN-SUFFIX,contabo.com,直连优先
+  - - DOMAIN-SUFFIX,ovh.com,直连优先
+  - - DOMAIN-SUFFIX,scaleway.com,直连优先
+  - - DOMAIN-SUFFIX,artstation.com,直连优先
+  - - DOMAIN-SUFFIX,unsplash.com,直连优先
+  - - DOMAIN-SUFFIX,pexels.com,直连优先
+  - - DOMAIN-SUFFIX,pixabay.com,直连优先
+  - - DOMAIN-SUFFIX,shutterstock.com,直连优先
+  - - DOMAIN-SUFFIX,gettyimages.com,直连优先
+  - - DOMAIN-SUFFIX,500px.com,直连优先
+  - - DOMAIN-SUFFIX,zerochan.net,直连优先
+  - - DOMAIN-SUFFIX,danbooru.donmai.us,直连优先
+  - - DOMAIN-SUFFIX,sankakucomplex.com,直连优先
+  - - DOMAIN-SUFFIX,yande.re,直连优先
+  - - DOMAIN-SUFFIX,wallhaven.cc,直连优先
+  - - DOMAIN-SUFFIX,newgrounds.com,直连优先
+  - - DOMAIN-SUFFIX,cara.app,直连优先
+  - - DOMAIN-SUFFIX,saucenao.com,直连优先
+  - - DOMAIN-SUFFIX,sketchfab.com,直连优先
+  - - DOMAIN-SUFFIX,dafont.com,直连优先
+  - - DOMAIN-SUFFIX,coolors.co,直连优先
+  - - DOMAIN-SUFFIX,colorhunt.co,直连优先
+  - - DOMAIN-SUFFIX,textures.com,直连优先
+  - - DOMAIN-SUFFIX,ambientcg.com,直连优先
+  - - DOMAIN-SUFFIX,picarto.tv,直连优先
+  - - DOMAIN-SUFFIX,9gag.com,直连优先
+  - - DOMAIN-SUFFIX,patreon.com,直连优先
+  - - DOMAIN-SUFFIX,deviantart.net,直连优先
+  - - DOMAIN-SUFFIX,pximg.net,直连优先
+  - - DOMAIN-SUFFIX,gumroad.com,直连优先
+  - - DOMAIN-SUFFIX,themoviedb.org,直连优先
+  - - DOMAIN-SUFFIX,tvdb.com,直连优先
+  - - DOMAIN-SUFFIX,kpkuang.com,直连优先
+  - - DOMAIN-SUFFIX,aiyifan.tv,直连优先
+  - - DOMAIN-SUFFIX,aiyifan.com,直连优先
+  - - DOMAIN-SUFFIX,linux.do,直连优先
+  - - DOMAIN-SUFFIX,jsdelivr.net,直连优先
+  - - DOMAIN-SUFFIX,unpkg.com,直连优先
+  - - DOMAIN-SUFFIX,esm.sh,直连优先
+  - - DOMAIN-SUFFIX,gravatar.com,直连优先
+  - - DOMAIN-SUFFIX,disqus.com,直连优先
+  - - DOMAIN-SUFFIX,torproject.org,直连优先
+  - - DOMAIN-SUFFIX,4chan.org,直连优先
+  - - DOMAIN-SUFFIX,mastodon.social,直连优先
+  - - DOMAIN-SUFFIX,ipfs.io,直连优先
+  - - DOMAIN-SUFFIX,fastly.net,直连优先
+  - - DOMAIN-SUFFIX,cloudfront.net,直连优先
+  - - DOMAIN-SUFFIX,netlify.app,直连优先
+  - - DOMAIN-SUFFIX,gitlab.io,直连优先
+  - - DOMAIN-SUFFIX,akamai.net,直连优先
+  - - DOMAIN-SUFFIX,akamaized.net,直连优先
+  - - DOMAIN-SUFFIX,cdnjs.cloudflare.com,直连优先
+  - - DOMAIN-SUFFIX,dropboxusercontent.com,直连优先
+  - - DOMAIN-SUFFIX,mega.nz,直连优先
+  - - DOMAIN-SUFFIX,mega.co.nz,直连优先
+  - - DOMAIN-SUFFIX,teamviewer.com,直连优先
+  - - DOMAIN-SUFFIX,anydesk.com,直连优先
+  - - DOMAIN-SUFFIX,zoom.us,直连优先
+  - - DOMAIN-SUFFIX,linode.com,直连优先
+  - - DOMAIN-SUFFIX,transferwise.com,直连优先
+  - - DOMAIN-SUFFIX,360buyimg.men,直连优先
+  - - DOMAIN-SUFFIX,kaspersky.com,直连优先
+  - - DOMAIN-SUFFIX,videolan.org,直连优先
+  - - DOMAIN-SUFFIX,skyscanner.net,直连优先
+  - - DOMAIN-SUFFIX,klarna.com,直连优先
+  - - DOMAIN-SUFFIX,zalando.com,直连优先
+  - - DOMAIN-SUFFIX,asos.com,直连优先
   - - DOMAIN-SUFFIX,zaobao.com,直连优先
-  - - DOMAIN-SUFFIX,straitstimes.com,直连优先
-  - - DOMAIN-SUFFIX,channelnewsasia.com,直连优先
   - - DOMAIN-SUFFIX,shopee.com,直连优先
   - - DOMAIN-SUFFIX,lazada.com,直连优先
   - - DOMAIN-SUFFIX,grab.com,直连优先
   - - DOMAIN-SUFFIX,agoda.com,直连优先
-  - - DOMAIN-SUFFIX,carousell.com,直连优先
-  - - DOMAIN-SUFFIX,singaporeair.com,直连优先
-  - - DOMAIN-SUFFIX,gojek.com,直连优先
-  - - DOMAIN-SUFFIX,garena.com,直连优先
   - - DOMAIN-SUFFIX,rakuten.co.jp,直连优先
   - - DOMAIN-SUFFIX,mercari.com,直连优先
   - - DOMAIN-SUFFIX,dmm.com,直连优先
@@ -827,242 +442,73 @@ prepend-rules:
   - - DOMAIN-SUFFIX,qiita.com,直连优先
   - - DOMAIN-SUFFIX,zenn.dev,直连优先
   - - DOMAIN-SUFFIX,hatenablog.com,直连优先
-  - - DOMAIN-SUFFIX,ana.co.jp,直连优先
-  - - DOMAIN-SUFFIX,jal.co.jp,直连优先
-  - - DOMAIN-SUFFIX,zozo.jp,直连优先
-  - - DOMAIN-SUFFIX,tver.jp,直连优先
-  - - DOMAIN-SUFFIX,nhk.or.jp,直连优先
-  - - DOMAIN-SUFFIX,yna.co.kr,直连优先
-  - - DOMAIN-SUFFIX,chosun.com,直连优先
-  - - DOMAIN-SUFFIX,donga.com,直连优先
-  - - DOMAIN-SUFFIX,joongang.co.kr,直连优先
-  - - DOMAIN-SUFFIX,kbs.co.kr,直连优先
-  - - DOMAIN-SUFFIX,mbc.co.kr,直连优先
   - - DOMAIN-SUFFIX,coupang.com,直连优先
   - - DOMAIN-SUFFIX,weverse.io,直连优先
-  - - DOMAIN-SUFFIX,nexon.com,直连优先
-  - - DOMAIN-SUFFIX,ncsoft.com,直连优先
-  - - DOMAIN-SUFFIX,krafton.com,直连优先
-  - - DOMAIN-SUFFIX,tving.com,直连优先
-  - - DOMAIN-SUFFIX,wavve.com,直连优先
-  - - DOMAIN-SUFFIX,gmarket.co.kr,直连优先
-  - - DOMAIN-SUFFIX,11st.co.kr,直连优先
-  - - DOMAIN-SUFFIX,toss.im,直连优先
-  - - DOMAIN-SUFFIX,bangkokpost.com,直连优先
-  - - DOMAIN-SUFFIX,kompas.com,直连优先
-  - - DOMAIN-SUFFIX,detik.com,直连优先
-  - - DOMAIN-SUFFIX,traveloka.com,直连优先
-  - - DOMAIN-SUFFIX,airasia.com,直连优先
-  - - DOMAIN-SUFFIX,tiki.vn,直连优先
-  - - DOMAIN-SUFFIX,thestar.com.my,直连优先
-  - - DOMAIN-SUFFIX,rappler.com,直连优先
-  - - DOMAIN-SUFFIX,inquirer.net,直连优先
-  - - DOMAIN-SUFFIX,alarabiya.net,直连优先
-  - - DOMAIN-SUFFIX,khaleejtimes.com,直连优先
-  - - DOMAIN-SUFFIX,thenationalnews.com,直连优先
-  - - DOMAIN-SUFFIX,arabnews.com,直连优先
   - - DOMAIN-SUFFIX,emirates.com,直连优先
   - - DOMAIN-SUFFIX,qatarairways.com,直连优先
-  - - DOMAIN-SUFFIX,saudia.com,直连优先
-  - - DOMAIN-SUFFIX,etihad.com,直连优先
   - - DOMAIN-SUFFIX,waze.com,直连优先
-  # ----- 成人内容(按需)-----
-  - - DOMAIN-SUFFIX,pornhub.com,PROXY
-  - - DOMAIN-SUFFIX,xvideos.com,PROXY
-  - - DOMAIN-SUFFIX,xnxx.com,PROXY
-  - - DOMAIN-SUFFIX,xhamster.com,PROXY
-  - - DOMAIN-SUFFIX,redtube.com,PROXY
-  - - DOMAIN-SUFFIX,youporn.com,PROXY
-  - - DOMAIN-SUFFIX,tube8.com,PROXY
-  - - DOMAIN-SUFFIX,spankbang.com,PROXY
-  - - DOMAIN-SUFFIX,motherless.com,PROXY
-  - - DOMAIN-SUFFIX,eporner.com,PROXY
-  - - DOMAIN-SUFFIX,porn.com,PROXY
-  - - DOMAIN-SUFFIX,onlyfans.com,PROXY
-  - - DOMAIN-SUFFIX,fansly.com,PROXY
-  - - DOMAIN-SUFFIX,chaturbate.com,PROXY
-  - - DOMAIN-SUFFIX,stripchat.com,PROXY
-  - - DOMAIN-SUFFIX,cam4.com,PROXY
-  - - DOMAIN-SUFFIX,bongacams.com,PROXY
-  - - DOMAIN-SUFFIX,livejasmin.com,PROXY
-  - - DOMAIN-SUFFIX,myfreecams.com,PROXY
-  - - DOMAIN-SUFFIX,nhentai.net,PROXY
-  - - DOMAIN-SUFFIX,e-hentai.org,PROXY
-  - - DOMAIN-SUFFIX,exhentai.org,PROXY
-  - - DOMAIN-SUFFIX,gelbooru.com,PROXY
-  - - DOMAIN-SUFFIX,rule34.xxx,PROXY
-  - - DOMAIN-SUFFIX,javdb.com,PROXY
-  - - DOMAIN-SUFFIX,javbus.com,PROXY
-  - - DOMAIN-SUFFIX,missav.com,PROXY
-  - - DOMAIN-SUFFIX,hanime.tv,PROXY
-  - - DOMAIN-SUFFIX,t66y.com,PROXY
-  # ==================== 直连 ====================
-  # ----- 内网 / 私网 -----
-  - - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
-  - - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
-  - - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
-  - - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
-  - - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
-  - - IP-CIDR6,::1/128,DIRECT,no-resolve
-  - - IP-CIDR6,fc00::/7,DIRECT,no-resolve
-  # ----- Apple(中国大陆部分强制直连)-----
-  # iCloud 国际版(icloud.com)同步异常时,可把 icloud.com 改为 PROXY
-  - - DOMAIN-SUFFIX,apple.com,DIRECT
-  - - DOMAIN-SUFFIX,apple.com.cn,DIRECT
-  - - DOMAIN-SUFFIX,icloud.com,DIRECT
-  - - DOMAIN-SUFFIX,icloud.com.cn,DIRECT
-  - - DOMAIN-SUFFIX,icloud-content.com,DIRECT
-  - - DOMAIN-SUFFIX,mzstatic.com,DIRECT
-  - - DOMAIN-SUFFIX,aaplimg.com,DIRECT
-  - - DOMAIN-SUFFIX,apple-cloudkit.com,DIRECT
-  - - DOMAIN-SUFFIX,apple-dns.net,DIRECT
-  - - DOMAIN-SUFFIX,me.com,DIRECT
-  - - DOMAIN-SUFFIX,mac.com,DIRECT
-  # ----- 国内 AI 供应商(默认直连,不走代理)-----
-  - - DOMAIN-SUFFIX,deepseek.com,DIRECT
-  - - DOMAIN-SUFFIX,moonshot.cn,DIRECT
-  - - DOMAIN-SUFFIX,kimi.com,DIRECT
-  - - DOMAIN-SUFFIX,zhipuai.cn,DIRECT
-  - - DOMAIN-SUFFIX,chatglm.cn,DIRECT
-  - - DOMAIN-SUFFIX,bigmodel.cn,DIRECT
-  # 阿里通义千问 / 百炼(境内版;境外版 dashscope-intl 已在代理段)
-  - - DOMAIN-SUFFIX,aliyuncs.com,DIRECT
-  - - DOMAIN-SUFFIX,aliyun.com,DIRECT
-  - - DOMAIN-SUFFIX,tongyi.com,DIRECT
-  - - DOMAIN-SUFFIX,volces.com,DIRECT
-  - - DOMAIN-SUFFIX,doubao.com,DIRECT
-  - - DOMAIN-SUFFIX,baidu.com,DIRECT
-  - - DOMAIN-SUFFIX,minimax.chat,DIRECT
-  - - DOMAIN-SUFFIX,minimaxi.com,DIRECT
-  - - DOMAIN-SUFFIX,stepfun.com,DIRECT
-  - - DOMAIN-SUFFIX,01.ai,DIRECT
-  - - DOMAIN-SUFFIX,baichuan-ai.com,DIRECT
-  - - DOMAIN-SUFFIX,xfyun.cn,DIRECT
-  # 硅基流动 SiliconFlow(境内版;国际站 siliconflow.com 在代理段)
-  - - DOMAIN-SUFFIX,siliconflow.cn,DIRECT
-  - - DOMAIN-SUFFIX,modelbest.cn,DIRECT
-  - - DOMAIN-SUFFIX,apiece.ai,DIRECT
-  # 国内 AI 创作平台(直连)
-  - - DOMAIN-SUFFIX,klingai.com,DIRECT  # 可灵 AI(快手)
-  - - DOMAIN-SUFFIX,liblib.art,DIRECT  # LiblibAI 模型站
-  - - DOMAIN-SUFFIX,tusiart.com,DIRECT  # 吐司 AI
-  - - DOMAIN-SUFFIX,jianying.com,DIRECT  # 剪映国内版
-  # ----- 外资云中国区(强制直连;海外版已在代理段)-----
-  # AWS 中国区(光环新网/西云数据)
-  - - DOMAIN-SUFFIX,amazonaws.cn,DIRECT
-  - - DOMAIN-SUFFIX,amazonaws.com.cn,DIRECT
-  # 亚马逊中国
-  - - DOMAIN-SUFFIX,amazon.cn,DIRECT
-  # Azure 中国区(世纪互联)
-  - - DOMAIN-SUFFIX,azure.cn,DIRECT
-  # ----- 国内邮箱供应商(完全不走代理)-----
-  # 网易邮箱
-  - - DOMAIN-SUFFIX,163.com,DIRECT
-  - - DOMAIN-SUFFIX,126.com,DIRECT
-  - - DOMAIN-SUFFIX,yeah.net,DIRECT
-  # 腾讯邮箱(含 foxmail、企业邮 exmail)
-  - - DOMAIN-SUFFIX,qq.com,DIRECT
-  - - DOMAIN-SUFFIX,foxmail.com,DIRECT
-  # 新浪邮箱
-  - - DOMAIN-SUFFIX,sina.com,DIRECT
-  - - DOMAIN-SUFFIX,sina.com.cn,DIRECT
-  # 移动 139 邮箱 / 电信 189 邮箱
-  - - DOMAIN-SUFFIX,139.com,DIRECT
-  - - DOMAIN-SUFFIX,189.cn,DIRECT
-  # 其他国内邮箱
-  - - DOMAIN-SUFFIX,263.net,DIRECT
-  - - DOMAIN-SUFFIX,263.com,DIRECT
-  - - DOMAIN-SUFFIX,sohu.com,DIRECT
-  - - DOMAIN-SUFFIX,tom.com,DIRECT
-  - - DOMAIN-SUFFIX,21cn.com,DIRECT
-  - - DOMAIN-SUFFIX,china.com,DIRECT
-  # ----- 飞书国内版 Feishu(完全不走代理)-----
-  - - DOMAIN-SUFFIX,feishu.cn,DIRECT
-  - - DOMAIN-SUFFIX,pstatp.com,DIRECT
-  # ----- 中国大陆 -----
-  # ----- 蒸汽平台(Steam 国服,完美世界)→ 强制直连 -----
-  - - DOMAIN-SUFFIX,steamchina.com,DIRECT
-  # ----- 中国大陆平台(强制直连,防止 CDN 误判)-----
-  - - DOMAIN-SUFFIX,tencent.com,DIRECT
-  - - DOMAIN-SUFFIX,taobao.com,DIRECT
-  - - DOMAIN-SUFFIX,tmall.com,DIRECT
-  - - DOMAIN-SUFFIX,1688.com,DIRECT
-  - - DOMAIN-SUFFIX,alibaba.com,DIRECT
-  - - DOMAIN-SUFFIX,jd.com,DIRECT
-  - - DOMAIN-SUFFIX,pinduoduo.com,DIRECT
-  - - DOMAIN-SUFFIX,douyin.com,DIRECT
-  - - DOMAIN-SUFFIX,toutiao.com,DIRECT
-  - - DOMAIN-SUFFIX,meituan.com,DIRECT
-  - - DOMAIN-SUFFIX,dianping.com,DIRECT
-  - - DOMAIN-SUFFIX,didi.com,DIRECT
-  - - DOMAIN-SUFFIX,ctrip.com,DIRECT
-  - - DOMAIN-SUFFIX,trip.com,DIRECT
-  - - DOMAIN-SUFFIX,bilibili.com,DIRECT
-  - - DOMAIN-SUFFIX,zhihu.com,DIRECT
-  - - DOMAIN-SUFFIX,douban.com,DIRECT
-  - - DOMAIN-SUFFIX,netease.com,DIRECT
-  - - DOMAIN-SUFFIX,xiaohongshu.com,DIRECT
-  - - DOMAIN-SUFFIX,kuaishou.com,DIRECT
-  - - DOMAIN-SUFFIX,iqiyi.com,DIRECT
-  - - DOMAIN-SUFFIX,youku.com,DIRECT
-  - - DOMAIN-SUFFIX,mgtv.com,DIRECT
-  - - DOMAIN-SUFFIX,hupu.com,DIRECT
-  - - DOMAIN-SUFFIX,smzdm.com,DIRECT
-  - - DOMAIN-SUFFIX,goofish.com,DIRECT
-  - - DOMAIN-SUFFIX,amap.com,DIRECT
-  - - DOMAIN-SUFFIX,icbc.com.cn,DIRECT
-  - - DOMAIN-SUFFIX,ccb.com,DIRECT
-  - - DOMAIN-SUFFIX,boc.cn,DIRECT
-  - - DOMAIN-SUFFIX,abchina.com,DIRECT
-  - - DOMAIN-SUFFIX,cmbchina.com,DIRECT
-  - - DOMAIN-SUFFIX,bankcomm.com,DIRECT
-  - - DOMAIN-SUFFIX,citicbank.com,DIRECT
-  - - DOMAIN-SUFFIX,spdb.com.cn,DIRECT
-  - - DOMAIN-SUFFIX,cebbank.com,DIRECT
-  - - DOMAIN-SUFFIX,pingan.com,DIRECT
-  - - DOMAIN-SUFFIX,cib.com.cn,DIRECT
-  - - DOMAIN-SUFFIX,huaweicloud.com,DIRECT
-  - - DOMAIN-SUFFIX,gitee.com,DIRECT
-  - - DOMAIN-SUFFIX,csdn.net,DIRECT
-  - - DOMAIN-SUFFIX,juejin.cn,DIRECT
-  - - DOMAIN-SUFFIX,cnblogs.com,DIRECT
-  - - DOMAIN-SUFFIX,oschina.net,DIRECT
-  - - DOMAIN-SUFFIX,51cto.com,DIRECT
-  - - DOMAIN-SUFFIX,qiniu.com,DIRECT
-  - - DOMAIN-SUFFIX,upyun.com,DIRECT
-  - - DOMAIN-SUFFIX,aliyundrive.com,DIRECT
-  - - DOMAIN-SUFFIX,quark.cn,DIRECT
-  - - DOMAIN-SUFFIX,123pan.com,DIRECT
-  - - DOMAIN-SUFFIX,lanzou.com,DIRECT
-  - - DOMAIN-SUFFIX,weiyun.com,DIRECT
-  - - DOMAIN-SUFFIX,wps.cn,DIRECT
-  - - DOMAIN-SUFFIX,dingtalk.com,DIRECT
-  - - DOMAIN-SUFFIX,wechat.com,DIRECT
-  - - DOMAIN-SUFFIX,kugou.com,DIRECT
-  - - DOMAIN-SUFFIX,kuwo.cn,DIRECT
-  - - DOMAIN-SUFFIX,migu.cn,DIRECT
-  - - DOMAIN-SUFFIX,ximalaya.com,DIRECT
-  - - DOMAIN-SUFFIX,douyu.com,DIRECT
-  - - DOMAIN-SUFFIX,huya.com,DIRECT
-  - - DOMAIN-SUFFIX,dedao.cn,DIRECT
-  - - DOMAIN-SUFFIX,cctv.com,DIRECT
-  - - DOMAIN-SUFFIX,xinhuanet.com,DIRECT
-  - - DOMAIN-SUFFIX,huawei.com,DIRECT
-  - - DOMAIN-SUFFIX,xiaomi.com,DIRECT
-  - - DOMAIN-SUFFIX,mi.com,DIRECT
-  - - DOMAIN-SUFFIX,oppo.com,DIRECT
-  - - DOMAIN-SUFFIX,vivo.com,DIRECT
-  - - DOMAIN-SUFFIX,byd.com,DIRECT
-  - - DOMAIN-SUFFIX,nio.com,DIRECT
-  - - DOMAIN-SUFFIX,lixiang.com,DIRECT
-  - - DOMAIN-SUFFIX,xpeng.com,DIRECT
-  - - DOMAIN-SUFFIX,qcc.com,DIRECT
-  - - DOMAIN-SUFFIX,tianyancha.com,DIRECT
-  - - DOMAIN-SUFFIX,cn,DIRECT
+  - - DOMAIN-SUFFIX,pixnet.net,直连优先
+  - - DOMAIN-SUFFIX,daum.net,直连优先
+  - - DOMAIN-SUFFIX,melon.com,直连优先
+  - - DOMAIN-SUFFIX,zalo.me,直连优先
+  - - DOMAIN-SUFFIX,noon.com,直连优先
+  - - DOMAIN-SUFFIX,ltn.com.tw,直连优先
+  - - DOMAIN-SUFFIX,theinitium.com,直连优先
+  # ===== GEOSITE 平台代理(自动更新)=====
+  - - GEOSITE,google,PROXY
+  - - GEOSITE,microsoft,PROXY
+  - - GEOSITE,telegram,PROXY
+  - - GEOSITE,facebook,PROXY
+  - - GEOSITE,twitter,PROXY
+  - - GEOSITE,instagram,PROXY
+  - - GEOSITE,whatsapp,PROXY
+  - - GEOSITE,discord,PROXY
+  - - GEOSITE,reddit,PROXY
+  - - GEOSITE,linkedin,PROXY
+  - - GEOSITE,pinterest,PROXY
+  - - GEOSITE,tumblr,PROXY
+  - - GEOSITE,tiktok,PROXY
+  - - GEOSITE,quora,PROXY
+  - - GEOSITE,medium,PROXY
+  - - GEOSITE,youtube,PROXY
+  - - GEOSITE,netflix,PROXY
+  - - GEOSITE,spotify,PROXY
+  - - GEOSITE,twitch,PROXY
+  - - GEOSITE,vimeo,PROXY
+  - - GEOSITE,dailymotion,PROXY
+  - - GEOSITE,epicgames,PROXY
+  - - GEOSITE,amazon,PROXY
+  - - GEOSITE,ebay,PROXY
+  - - GEOSITE,paypal,PROXY
+  - - GEOSITE,cloudflare,PROXY
+  - - GEOSITE,openai,PROXY
+  - - GEOSITE,anthropic,PROXY
+  - - GEOSITE,perplexity,PROXY
+  - - GEOSITE,huggingface,PROXY
+  - - GEOSITE,jetbrains,PROXY
+  - - GEOSITE,gitlab,PROXY
+  - - DOMAIN-SUFFIX,stackoverflow.com,PROXY
+  - - DOMAIN-SUFFIX,stackexchange.com,PROXY
+  - - GEOSITE,xbox,PROXY
+  - - GEOSITE,nintendo,PROXY
+  - - GEOSITE,sony,PROXY
+  - - DOMAIN-SUFFIX,riotgames.com,PROXY
+  - - GEOSITE,blizzard,PROXY
+  - - DOMAIN-SUFFIX,battle.net,PROXY
+  - - GEOSITE,gog,PROXY
+  - - DOMAIN-SUFFIX,itch.io,PROXY
+  - - DOMAIN-SUFFIX,humblebundle.com,PROXY
+  - - GEOSITE,jable,PROXY
+  - - GEOSITE,category-media,PROXY
+  - - GEOSITE,category-finance,PROXY
+  - - GEOSITE,category-dev,PROXY
+  - - GEOSITE,category-games,PROXY
+  - - GEOSITE,gfw,PROXY
+  # ===== 兜底 =====
   - - GEOIP,CN,DIRECT
-  # ==================== 兜底:默认直连,直连不通自动切代理 ====================
   - - MATCH,直连优先
 
-# 兜底策略组(配合订阅 rules 末尾的 MATCH 使用)
 append-proxy-groups:
+  # 代理出口组(若订阅无 PROXY 组,请把成员改为你订阅的节点组名)
+  - { name: 'PROXY', type: select, proxies: ['自动选择', '节点选择', DIRECT] }
   - { name: '直连优先', type: fallback, proxies: [DIRECT, PROXY], url: 'https://www.google.com/generate_204', interval: 300 }
