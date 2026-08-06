@@ -1,16 +1,29 @@
-# Clash 通用分流规则(可订阅)
+# Clash 通用分流规则
 
-无节点信息,出口使用 PROXY / DIRECT / 直连优先 / REJECT 关键字的通用分流规则。
+一套开箱即用的 Clash 分流规则,覆盖日常上网的大部分场景:
 
-## 订阅方式(推荐)
+- **海外网站自动走代理**:Google、YouTube、ChatGPT、GitHub、Netflix、X/Twitter、Discord、Telegram 等
+- **国内网站自动直连**:淘宝、京东、B站、知乎、国内 AI(DeepSeek/Kimi)、国内邮箱等,不绕路
+- **智能兜底**:不确定的网站,先直连,连不上自动切代理
+- **广告过滤**:屏蔽常见国内广告/统计域名,不影响网站正常功能
+- **封禁风险保护**:对封大陆 IP 的平台(AI/加密/金融/券商等)强制走代理,避免风控
 
-### 方式一:Clash Verge 全局扩展(最简单,订阅更新不丢)
+## 快速开始(推荐)
 
-1. 设置 → 全局扩展 → 从 URL 添加
-2. URL:`https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/clash-verge-merge.yaml`
-3. 保存后自动生效;机场订阅更新不影响规则
+**Clash Verge / Clash Verge Rev 用户**,30 秒完成:
 
-### 方式二:mihomo rule-provider(标准订阅)
+1. 打开 Clash Verge → **设置** → **全局扩展** → **从 URL 添加**
+2. 粘贴:
+
+```
+https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/clash-verge-merge.yaml
+```
+
+3. 保存即生效。之后机场订阅怎么更新,规则都不会丢。
+
+## 其他方式
+
+**方式二:mihomo(Clash Meta 内核)rule-provider**
 
 在订阅配置中加:
 
@@ -24,24 +37,21 @@ rule-providers:
     interval: 86400
 ```
 
-并将 `rules:` 中加一行(放在订阅自带规则之前):
+在 `rules:` 最前面加一行:
 
 ```yaml
   - RULE-SET,universal,直连优先
 ```
 
-### 方式三:直接替换订阅文件的 rules 段
+**方式三:替换订阅的 rules 段**
 
-下载 `clash-rules.yaml`,把 `rules:` 整段替换进订阅配置,并把 `直连优先` 组追加到 `proxy-groups:`。
+下载 [clash-rules.yaml](https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/clash-rules.yaml),把订阅配置里的 `rules:` 整段替换,并在 `proxy-groups:` 末尾追加:
 
-## 兜底说明
+```yaml
+    - { name: '直连优先', type: fallback, proxies: [DIRECT, PROXY], url: 'https://www.google.com/generate_204', interval: 300 }
+```
 
-- 方式一/二 的兜底:建议把订阅自带 `rules` 末尾的 `MATCH` 指向 `直连优先` 组(或按需用 PROXY/DIRECT)
-- `clash-rules.yaml` 已含完整兜底(`MATCH,直连优先`),直接替换最省心
+## 提示
 
-## 策略
-
-- **PROXY**:AI/加密/金融/社交/流媒体/游戏/军事/短链等封 IP 平台(强制代理,不直连)
-- **直连优先**:GitHub/Steam/开发工具/学习/内容站/CDN(能直连就直连,不通自动切代理)
-- **DIRECT**:内网/Apple/国内 AI/国内邮箱/大陆平台(强制直连)
-- **REJECT**:纯广告/统计域名(不影响功能)
+- 兜底策略:建议将订阅自带 `rules` 末尾的 `MATCH` 指向 `直连优先` 组,体验最佳
+- 想增加新网站?提 Issue 或直接告诉我
