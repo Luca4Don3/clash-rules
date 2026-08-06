@@ -83,6 +83,10 @@ TYPE_PLAIN, TYPE_REGEX, TYPE_DOMAIN, TYPE_FULL = 0, 1, 2, 3
 # 策略名映射:Clash -> Shadowrocket
 POLICY_MAP = {"REJECT": "REJECT", "DIRECT": "DIRECT", "PROXY": "Proxy", "直连优先": "直连优先"}
 
+# Clash 文件中的平台域名补充块标记(自动生成,生成 conf 时跳过)
+EXTRA_BEGIN = "# ===== 平台域名补充(自动生成,请勿手改)====="
+EXTRA_END = "# ===== 平台域名补充结束 ====="
+
 # 需要展开成独立规则集的 GEOSITE 分类
 ADS_CATS = {"category-ads-all"}
 CN_CATS = {"cn"}
@@ -229,6 +233,63 @@ def geosite_to_rule(typ, val):
     return None
 
 
+def update_clash_platform_extra(repo_root, cats):
+    entries = cats.get("CATEGORY-PORN", [])
+    if not entries:
+        print("  [警告] geosite.dat 中无 CATEGORY-PORN 分类,跳过平台域名补充")
+        return
+    extra = set()
+    for typ, val in entries:
+        if "@" in val:
+            val = val.split("@", 1)[0]
+        val = val.strip().lstrip(".")
+        if not val:
+            continue
+        if typ in (TYPE_PLAIN, TYPE_DOMAIN):
+            r = f"DOMAIN-SUFFIX,{val},PROXY"
+        elif typ == TYPE_FULL:
+            r = f"DOMAIN,{val},PROXY"
+        elif typ == TYPE_REGEX:
+            r = f"DOMAIN-REGEX,{val},PROXY"
+        else:
+            continue
+        extra.add(r)
+    extra = sorted(extra)
+
+    def patch(path, indent, dash):
+        with open(path, encoding="utf-8") as f:
+            lines = f.read().split("\n")
+        out, in_extra, inserted = [], False, False
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith(EXTRA_BEGIN):
+                in_extra = True
+                continue
+            if stripped.startswith(EXTRA_END):
+                in_extra = False
+                continue
+            if in_extra:
+                continue
+            if stripped.startswith("-") and "category-porn" in stripped:
+                continue
+            out.append(line)
+            if "GEOSITE,gfw,PROXY" in stripped and not inserted:
+                out.append(indent + EXTRA_BEGIN)
+                out.extend(indent + dash + r for r in extra)
+                out.append(indent + EXTRA_END)
+                inserted = True
+        if not inserted:
+            print(f"  [警告] {path}: 未找到 GEOSITE,gfw 锚点,平台域名补充未插入")
+            return
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(out) + "\n")
+        print(f"  {path}: 平台域名补充 {len(extra)} 行")
+
+    # rule-provider.yaml 每行一个 "- RULE";merge 的 prepend-rules 为嵌套列表 "  - - RULE"
+    patch(os.path.join(repo_root, "rule-provider.yaml"), "", "- ")
+    patch(os.path.join(repo_root, "clash-verge-merge.yaml"), "  ", "- - ")
+
+
 # ---------- 主流程 ----------
 
 def load_dat(path, parser_cls):
@@ -329,13 +390,27 @@ def main():
         f.write("# 中国大陆 IP 段(由 geoip.dat CN 展开,自动更新)\n")
         f.write("\n".join(sorted(ipcn)) + "\n")
 
+    print("== 4.5/5 同步 Clash 平台域名补充 ==")
+    update_clash_platform_extra(repo_root, cats)
+
     print("== 5/5 生成 shadowrocket.conf ==")
     rule_path = os.path.join(repo_root, "rule-provider.yaml")
     rules = []
+    in_extra = False
     with open(rule_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if not line or line.startswith("#"):
+            if not line:
+                continue
+            if line.startswith(EXTRA_BEGIN):
+                in_extra = True
+                continue
+            if line.startswith(EXTRA_END):
+                in_extra = False
+                continue
+            if in_extra:
+                continue  # Clash 内嵌展开块由 proxy.list 规则集覆盖,不转入 conf
+            if line.startswith("#"):
                 continue
             if not line.startswith("- "):
                 continue
