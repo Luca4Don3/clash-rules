@@ -1,7 +1,7 @@
 # 分流规则 - Clash Verge 全局扩展
 # 用法:设置 -> 全局扩展 -> 从 URL 添加
 
-prepend-rule-providers:
+rule-providers:
   ads-extra:
     type: http
     behavior: classical
@@ -17,7 +17,7 @@ prepend-rule-providers:
 profile:
   store-selected: true
 
-prepend-rules:
+rules:
   # ===== 广告拦截 =====
   - - GEOSITE,category-ads-all,REJECT
   - - RULE-SET,ads-extra,REJECT
@@ -7191,6 +7191,7 @@ prepend-rules:
   # ===== 兜底 =====
   - - GEOIP,CN,DIRECT
   - - MATCH,直连优先
+
 
 
 

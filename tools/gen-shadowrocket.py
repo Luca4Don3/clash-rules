@@ -464,10 +464,10 @@ def patch_clash_rule_sets(repo_root):
     path = os.path.join(repo_root, "clash", "clash-verge-merge.yaml")
     with open(path, encoding="utf-8") as f:
         text = f.read()
-    if all(f"RULE-SET,{n},REJECT" in text for n, _ in sets) and "prepend-rule-providers:" in text:
+    if all(f"RULE-SET,{n},REJECT" in text for n, _ in sets) and "rule-providers:" in text:
         print(f"  {path}: 规则集引用已存在")
         return
-    provider_block = "prepend-rule-providers:\n"
+    provider_block = "rule-providers:\n"
     for name, url in sets:
         provider_block += f"""  {name}:
     type: http
@@ -480,7 +480,7 @@ def patch_clash_rule_sets(repo_root):
     # 清理已有注入
     out, in_prov = [], False
     for line in lines:
-        if line.strip() == "prepend-rule-providers:":
+        if line.strip() == "rule-providers:":
             in_prov = True
             continue
         if in_prov:
