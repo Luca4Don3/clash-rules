@@ -5,9 +5,8 @@
 - **海外网站自动走代理**:Google、YouTube、ChatGPT、GitHub、Netflix、X/Twitter、Discord、Telegram 等
 - **国内网站自动直连**:淘宝、京东、B站、知乎、国内 AI(DeepSeek/Kimi)、国内邮箱等,不绕路
 - **策略兜底**:不确定的网站,先直连,连不上自动切代理
-- **广告过滤**:自维护精确规则 + 社区大列表兜底,屏蔽常见广告/统计域名,不影响网站正常功能
+- **广告过滤**:自维护精确规则 + 多源交叉验证的大列表兜底,屏蔽常见广告/统计/恶意域名,不影响网站正常功能
 - **封禁风险保护**:对封大陆 IP 的平台(AI/加密/金融/券商等)强制走代理,避免风控
-- **自动更新**:GitHub Actions 每日同步上游数据源,规则集保持最新,零手工维护
 
 ## 目录结构
 
@@ -19,7 +18,8 @@ shadowrocket/          Shadowrocket 配置与规则集
   shadowrocket.conf        完整配置(订阅导入)
   geosite/                 geosite 展开的规则集(ads/cn/proxy/ipcn)
 rules/                 多端共用的补充规则集
-  ads-extra.list          广告域名补充(anti-AD)
+  ads-extra.list          广告域名补充(多源交叉验证)
+  malware.list            恶意/诈骗/钓鱼域名
 tools/                 生成脚本
 ```
 
@@ -86,23 +86,19 @@ https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/shadowrocket/shad
 > 提示:首次导入需要设备能访问 GitHub。若规则集更新失败,把配置里的
 > `raw.githubusercontent.com` 换成镜像 `cdn.jsdelivr.net/gh/Luca4Don3/clash-rules@master` 即可。
 
-## 自动更新
-
-`.github/workflows/update-rules.yml` 每日自动执行:
-
-1. 拉取最新 geosite / geoip 数据库与 anti-AD 广告列表
-2. 重新生成全部规则产物
-3. 有变化时自动提交推送,三端规则同步保持最新
-
-也可以在 Actions 页面手动触发。
-
 ## 致谢
 
 规则数据引用以下开源项目,特此感谢:
 
 - [MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat):geosite / geoip 数据库,规则集的数据源
 - [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community):geosite 域名的社区维护来源
-- [privacy-protection-tools/anti-AD](https://github.com/privacy-protection-tools/anti-AD):广告域名补充列表
+- [privacy-protection-tools/anti-AD](https://github.com/privacy-protection-tools/anti-AD):广告域名列表
+- [AdGuardTeam/AdGuardSDNSFilter](https://github.com/AdguardTeam/AdguardSDNSFilter):AdGuard DNS filter 广告列表
+- [Cats-Team/AdRules](https://github.com/Cats-Team/AdRules):乘风广告规则
+- [hagezi/dns-blocklists](https://github.com/hagezi/dns-blocklists):诈骗域名列表
+- [abuse.ch/URLhaus](https://urlhaus.abuse.ch):恶意软件分发域名列表
+
+其中广告域名采用多源交叉验证:仅收录至少两个独立源共现的域名,并设有核心域名保护名单,上游出现异常时自动拦截。
 
 ## 提示
 

@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   update:
@@ -20,9 +21,22 @@ jobs:
           curl -sL -o /tmp/geosite.dat https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat
           curl -sL -o /tmp/geoip.dat https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat
           curl -sL -o /tmp/anti-ad-domains.txt https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt
+          curl -sL -o /tmp/adguard-filter.txt https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
+          curl -sL -o /tmp/adrules.txt https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt
+          curl -sL -o /tmp/urlhaus.txt https://urlhaus.abuse.ch/downloads/text/
+          curl -sL -o /tmp/hagezi-fake.txt https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/fake.txt
 
       - name: Generate rules
         run: python3 tools/gen-shadowrocket.py --offline --dat-dir /tmp
+
+      - name: Guard against suspicious changes
+        run: |
+          if ! python3 tools/check-diff.py; then
+            gh issue create \
+              --title "规则更新异常:疑似上游异常" \
+              --body "自动更新检测到可疑变化,已跳过推送,请人工审查上游数据源。$(git status --porcelain)"
+            exit 1
+          fi
 
       - name: Commit and push if changed
         run: |

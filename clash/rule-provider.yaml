@@ -1,6 +1,8 @@
 # ===== 广告拦截 =====
 - GEOSITE,category-ads-all,REJECT
 - RULE-SET,ads-extra,REJECT
+- RULE-SET,malware,REJECT
+- RULE-SET,ads-extra,REJECT
 - DOMAIN,hm.baidu.com,REJECT
 - DOMAIN,cpro.baidu.com,REJECT
 - DOMAIN,pos.baidu.com,REJECT
@@ -7170,6 +7172,9 @@
 # ===== 兜底 =====
 - GEOIP,CN,DIRECT
 - MATCH,直连优先
+
+
+
 
 
 

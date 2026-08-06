@@ -8,10 +8,17 @@ prepend-rule-providers:
     url: https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/rules/ads-extra.list
     path: ./rules/ads-extra.yaml
     interval: 86400
+  malware:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/rules/malware.list
+    path: ./rules/malware.yaml
+    interval: 86400
 prepend-rules:
   # ===== 广告拦截 =====
   - - GEOSITE,category-ads-all,REJECT
   - - RULE-SET,ads-extra,REJECT
+  - - RULE-SET,malware,REJECT
   - - DOMAIN,hm.baidu.com,REJECT
   - - DOMAIN,cpro.baidu.com,REJECT
   - - DOMAIN,pos.baidu.com,REJECT
@@ -7181,6 +7188,9 @@ prepend-rules:
   # ===== 兜底 =====
   - - GEOIP,CN,DIRECT
   - - MATCH,直连优先
+
+
+
 
 
 
