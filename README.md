@@ -23,7 +23,7 @@ https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/clash-verge-merge
 
 ## 其他方式
 
-**方式二:mihomo(Clash Meta 内核)rule-provider**
+**mihomo(Clash Meta 内核)rule-provider**
 
 在订阅配置中加:
 
@@ -41,14 +41,6 @@ rule-providers:
 
 ```yaml
   - RULE-SET,universal,直连优先
-```
-
-**方式三:替换订阅的 rules 段**
-
-下载 [clash-rules.yaml](https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/clash-rules.yaml),把订阅配置里的 `rules:` 整段替换,并在 `proxy-groups:` 末尾追加:
-
-```yaml
-    - { name: '直连优先', type: fallback, proxies: [DIRECT, PROXY], url: 'https://www.google.com/generate_204', interval: 300 }
 ```
 
 ## 提示
