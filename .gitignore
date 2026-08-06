@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# 私有规则(个人使用,严禁提交)
+private/
+Private.yaml
+*.private.yaml
