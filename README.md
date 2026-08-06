@@ -4,9 +4,24 @@
 
 - **海外网站自动走代理**:Google、YouTube、ChatGPT、GitHub、Netflix、X/Twitter、Discord、Telegram 等
 - **国内网站自动直连**:淘宝、京东、B站、知乎、国内 AI(DeepSeek/Kimi)、国内邮箱等,不绕路
-- **智能兜底**:不确定的网站,先直连,连不上自动切代理
-- **广告过滤**:屏蔽常见国内广告/统计域名,不影响网站正常功能
+- **策略兜底**:不确定的网站,先直连,连不上自动切代理
+- **广告过滤**:自维护精确规则 + 社区大列表兜底,屏蔽常见广告/统计域名,不影响网站正常功能
 - **封禁风险保护**:对封大陆 IP 的平台(AI/加密/金融/券商等)强制走代理,避免风控
+- **自动更新**:GitHub Actions 每日同步上游数据源,规则集保持最新,零手工维护
+
+## 目录结构
+
+```
+clash/                 Clash 系配置
+  clash-verge-merge.yaml   Clash Verge 全局扩展
+  rule-provider.yaml       mihomo rule-provider
+shadowrocket/          Shadowrocket 配置与规则集
+  shadowrocket.conf        完整配置(订阅导入)
+  geosite/                 geosite 展开的规则集(ads/cn/proxy/ipcn)
+rules/                 多端共用的补充规则集
+  ads-extra.list          广告域名补充(anti-AD)
+tools/                 生成脚本
+```
 
 ## 快速开始(推荐)
 
@@ -16,7 +31,7 @@
 2. 粘贴:
 
 ```
-https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/clash-verge-merge.yaml
+https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/clash/clash-verge-merge.yaml
 ```
 
 3. 保存即生效。之后机场订阅怎么更新,规则都不会丢。
@@ -32,15 +47,22 @@ rule-providers:
   universal:
     type: http
     behavior: classical
-    url: https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/rule-provider.yaml
+    url: https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/clash/rule-provider.yaml
     path: ./rules/universal.yaml
+    interval: 86400
+  ads-extra:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/rules/ads-extra.list
+    path: ./rules/ads-extra.yaml
     interval: 86400
 ```
 
-在 `rules:` 最前面加一行:
+在 `rules:` 最前面加两行:
 
 ```yaml
   - RULE-SET,universal,直连优先
+  - RULE-SET,ads-extra,REJECT
 ```
 
 ## Shadowrocket(iOS)
@@ -64,6 +86,25 @@ https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/shadowrocket/shad
 > 提示:首次导入需要设备能访问 GitHub。若规则集更新失败,把配置里的
 > `raw.githubusercontent.com` 换成镜像 `cdn.jsdelivr.net/gh/Luca4Don3/clash-rules@master` 即可。
 
+## 自动更新
+
+`.github/workflows/update-rules.yml` 每日自动执行:
+
+1. 拉取最新 geosite / geoip 数据库与 anti-AD 广告列表
+2. 重新生成全部规则产物
+3. 有变化时自动提交推送,三端规则同步保持最新
+
+也可以在 Actions 页面手动触发。
+
+## 致谢
+
+规则数据引用以下开源项目,特此感谢:
+
+- [MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat):geosite / geoip 数据库,规则集的数据源
+- [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community):geosite 域名的社区维护来源
+- [privacy-protection-tools/anti-AD](https://github.com/privacy-protection-tools/anti-AD):广告域名补充列表
+
 ## 提示
 
 - 兜底策略:建议将订阅自带 `rules` 末尾的 `MATCH` 指向 `直连优先` 组,体验最佳
+- 广告规则分两层:自维护精确规则(最前)+ 社区大列表兜底,如需调整误杀,优先改自维护段
