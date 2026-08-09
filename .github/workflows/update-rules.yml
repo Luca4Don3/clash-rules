@@ -1,0 +1,51 @@
+name: Update rules
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # 每天 UTC 02:00(北京时间 10:00)
+  workflow_dispatch: # 支持手动触发
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download data sources
+        run: |
+          curl -sL -o /tmp/geosite.dat https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat
+          curl -sL -o /tmp/geoip.dat https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat
+          curl -sL -o /tmp/anti-ad-domains.txt https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt
+          curl -sL -o /tmp/adguard-filter.txt https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
+          curl -sL -o /tmp/adrules.txt https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt
+          curl -sL -o /tmp/urlhaus.txt https://urlhaus.abuse.ch/downloads/text/
+          curl -sL -o /tmp/hagezi-fake.txt https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/fake.txt
+
+      - name: Generate rules
+        run: python3 tools/gen-shadowrocket.py --offline --dat-dir /tmp
+
+      - name: Guard against suspicious changes
+        run: |
+          if ! python3 tools/check-diff.py; then
+            gh issue create \
+              --title "规则更新异常:疑似上游异常" \
+              --body "自动更新检测到可疑变化,已跳过推送,请人工审查上游数据源。$(git status --porcelain)"
+            exit 1
+          fi
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "chore: auto-update rules from upstream"
+            git push
+          else
+            echo "No changes, skip commit"
+          fi
