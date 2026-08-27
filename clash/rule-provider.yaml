@@ -4530,6 +4530,7 @@
 - DOMAIN-SUFFIX,newsexwap.com,PROXY
 - DOMAIN-SUFFIX,newsexxxx.com,PROXY
 - DOMAIN-SUFFIX,newxxx24.cc,PROXY
+- DOMAIN-SUFFIX,ngfiles.com,PROXY
 - DOMAIN-SUFFIX,nhentai.com,PROXY
 - DOMAIN-SUFFIX,nhentai.io,PROXY
 - DOMAIN-SUFFIX,nhentai.net,PROXY
@@ -7172,6 +7173,7 @@
 # ===== 兜底 =====
 - GEOIP,CN,DIRECT
 - MATCH,直连优先
+
 
 
 
