@@ -185,9 +185,10 @@ DOMAIN,f.c2r.ts.cdn.office.net
 DOMAIN,f3b7q2p3.ssl.hwcdn.net
 DOMAIN,fbcdn-a.akamaihd.net
 DOMAIN,firebase-settings.crashlytics.com
-DOMAIN,firebase.google.com
 DOMAIN,firebase.googleapis.com
 DOMAIN,firebaseappcheck.googleapis.com
+DOMAIN,firebaseappdistribution.googleapis.com
+DOMAIN,firebaseapptesters.googleapis.com
 DOMAIN,firebasedynamiclinks-ipv4.googleapis.com
 DOMAIN,firebasedynamiclinks-ipv6.googleapis.com
 DOMAIN,firebasedynamiclinks.googleapis.com
@@ -3732,6 +3733,7 @@ DOMAIN-SUFFIX,cocktailsandcocktalk.com
 DOMAIN-SUFFIX,cockyboys.com
 DOMAIN-SUFFIX,codeberg.org
 DOMAIN-SUFFIX,codeberg.page
+DOMAIN-SUFFIX,codebuff.com
 DOMAIN-SUFFIX,codeforaliving.io
 DOMAIN-SUFFIX,codeseason.by
 DOMAIN-SUFFIX,codeshare.io
@@ -5693,6 +5695,8 @@ DOMAIN-SUFFIX,finevids.xxx
 DOMAIN-SUFFIX,fire-emblem-heroes.com
 DOMAIN-SUFFIX,firearmsworld.net
 DOMAIN-SUFFIX,firebase.com
+DOMAIN-SUFFIX,firebase.dev
+DOMAIN-SUFFIX,firebase.google.com
 DOMAIN-SUFFIX,firebase.io
 DOMAIN-SUFFIX,firebaseapp.com
 DOMAIN-SUFFIX,firebaseio.com
@@ -6030,6 +6034,7 @@ DOMAIN-SUFFIX,freebigmovies.com
 DOMAIN-SUFFIX,freebrowser.org
 DOMAIN-SUFFIX,freebs.com
 DOMAIN-SUFFIX,freebsd.org
+DOMAIN-SUFFIX,freebuff.com
 DOMAIN-SUFFIX,freecamsfan.com
 DOMAIN-SUFFIX,freecartoons.biz
 DOMAIN-SUFFIX,freechatnow.com
@@ -14548,6 +14553,7 @@ DOMAIN-SUFFIX,texasholdemcup.net
 DOMAIN-SUFFIX,textnow.com
 DOMAIN-SUFFIX,textnow.me
 DOMAIN-SUFFIX,texttobuy.org
+DOMAIN-SUFFIX,tfbnw.net
 DOMAIN-SUFFIX,tfc-taiwan.org.tw
 DOMAIN-SUFFIX,tferwq.com
 DOMAIN-SUFFIX,tfhub.dev
