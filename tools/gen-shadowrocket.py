@@ -367,8 +367,9 @@ def download_sources(dat_dir):
     dat_dir.mkdir(parents=True, exist_ok=True)
     for name, url, minimum in SOURCES:
         dest = dat_dir / name
-        subprocess.run(["curl", "--fail", "--location", "--retry", "3", "--connect-timeout", "15",
-                        "--max-time", "120", "--output", str(dest), url], check=True)
+        subprocess.run(["curl", "--fail", "--location", "--retry", "5", "--retry-all-errors",
+                        "--retry-delay", "5", "--connect-timeout", "30", "--max-time", "600",
+                        "--http1.1", "--output", str(dest), url], check=True)
         if dest.stat().st_size < minimum:
             raise RuntimeError(f"{name}: {dest.stat().st_size} bytes, minimum is {minimum}")
         manifest["sources"].append({"name": name, "url": url, "version": "latest",
@@ -428,6 +429,11 @@ def generate_upstream(root, dat_dir, rules):
     atomic_write(root / "rules" / "malware.list", "# 自动生成\n" + "\n".join(malware))
 
 
+def source_snapshot_id(sources):
+    material = "\n".join(f"{item['name']}:{item['sha256']}" for item in sources)
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--offline", action="store_true")
@@ -451,6 +457,7 @@ def main():
                                         "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
     else:
         manifest = download_sources(dat_dir)
+    manifest["snapshot_sha256"] = source_snapshot_id(manifest["sources"])
     generate_upstream(root, dat_dir, rules)
     skipped = write_client_outputs(root, rules)
     print(f"client outputs generated; skipped regex: {skipped}")

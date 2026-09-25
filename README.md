@@ -52,7 +52,7 @@ python3 tools/check-diff.py
 python3 tools/test-integration.py
 ```
 
-下载固定使用失败检测、重试、连接超时和总超时；[`rules/sources.json`](rules/sources.json) 记录上游 URL、版本和 SHA-256。离线生成只代表该清单对应的快照，CI 才会按 `latest` 重新抓取；CI 只暂存明确列出的生成产物。
+下载固定使用失败检测、重试、连接超时和总超时；[`rules/sources.json`](rules/sources.json) 记录上游 URL、版本、每项 SHA-256 和整体 `snapshot_sha256`。离线生成只代表该清单对应的快照，CI 才会按 `latest` 重新抓取；CI 只暂存明确列出的生成产物。
 
 规则顺序固定为：广告/恶意拦截 → 私网 → 敏感服务 → 国内定制 → GEOSITE CN → 直连优先 → 普通海外代理 → GEOIP CN → DIRECT。当前 CN 分类优先于普通海外代理，因此 `.cn` 海外服务需要显式前置例外，不能直接全局调换顺序。私网规则强制使用 `DIRECT`；URLhaus 生成的 IP 规则会排除与这些私网/特殊地址重叠的条目。火山引擎中国站是用户指定的强制直连例外，置于广告规则之前，避免被上游广告条目（如 `mssdk.volces.com`）遮蔽；国际站 `byteplus.com` 仍使用敏感服务策略。
 
