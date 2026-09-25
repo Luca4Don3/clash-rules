@@ -1,727 +1,465 @@
 #!/usr/bin/env python3
-"""
-从 Clash 规则 + mihomo geosite/geoip 数据库 + 多个社区规则源生成全端订阅配置。
-
-产物:
-  clash/rule-provider.yaml        mihomo rule-provider(含平台域名补充)
-  clash/clash-verge-merge.yaml    Clash Verge 全局扩展(含平台域名补充)
-  shadowrocket/shadowrocket.conf  Shadowrocket 完整配置(URL 订阅导入)
-  shadowrocket/geosite/ads.list   广告域名规则集(category-ads-all 展开)
-  shadowrocket/geosite/cn.list    中国大陆域名规则集(GEOSITE,cn 展开)
-  shadowrocket/geosite/proxy.list 海外平台域名规则集(GEOSITE 平台分类展开)
-  shadowrocket/geosite/ipcn.list  中国大陆 IP-CIDR 规则集(geoip.dat CN 展开)
-  rules/ads-extra.list            广告域名补充(多源交叉验证,多端共用)
-  rules/malware.list              恶意/诈骗/钓鱼域名(多端共用)
-
-用法:
-  python3 tools/gen-shadowrocket.py            # 自动下载最新数据源
-  python3 tools/gen-shadowrocket.py --offline  # 复用 --dat-dir 下已下载的数据源
-"""
+"""从统一政策源与上游数据库生成 Clash / Shadowrocket 产物。"""
 
 import argparse
+import hashlib
 import ipaddress
+import json
 import os
+import re
+import subprocess
 import sys
-import urllib.request
-from collections import Counter
+from pathlib import Path
+from urllib.parse import urlsplit
 
 REPO = "Luca4Don3/clash-rules"
 BRANCH = "master"
-BASE_URL = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}/shadowrocket/geosite"
-RULES_URL = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}/rules"
+RAW = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}"
 DAT_RELEASES = "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest"
-
-# 数据源: (文件名, 下载 URL, 最小字节数, 是否必备)
+ALLOWED_POLICIES = {"REJECT", "DIRECT", "SENSITIVE", "DIRECT-PREFERRED", "PROXY"}
+POLICY_ORDER = {"REJECT": 0, "PRIVATE": 1, "SENSITIVE": 2, "DIRECT": 3,
+                "DIRECT-PREFERRED": 4, "PROXY": 5}
+PRIVATE_NETWORKS = (
+    ipaddress.ip_network("10.0.0.0/8"), ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"), ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("100.64.0.0/10"), ipaddress.ip_network("169.254.0.0/16"),
+    ipaddress.ip_network("224.0.0.0/4"), ipaddress.ip_network("240.0.0.0/4"),
+    ipaddress.ip_network("::1/128"), ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"), ipaddress.ip_network("ff00::/8"),
+)
+FORCE_DIRECT_DOMAINS = {
+    "volcengine.com", "volcengine.net", "volcengineapi.com", "volcengine-api.com",
+    "volces.com", "volceapi.com", "volccdn.com", "volcdns.com", "volcvideo.com",
+    "volcimagex.com", "byteimg.com", "ibytedtos.com",
+}
 SOURCES = [
-    ("geosite.dat", f"{DAT_RELEASES}/geosite.dat", 1_000_000, True),
-    ("geoip.dat", f"{DAT_RELEASES}/geoip.dat", 5_000_000, True),
-    ("anti-ad-domains.txt", "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt", 1_000_000, True),
-    ("adguard-filter.txt", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", 1_000_000, True),
-    ("adrules.txt", "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt", 1_000_000, True),
-    ("urlhaus.txt", "https://urlhaus.abuse.ch/downloads/text/", 500_000, True),
-    ("hagezi-fake.txt", "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/fake.txt", 100_000, True),
+    ("geosite.dat", f"{DAT_RELEASES}/geosite.dat", 1_000_000),
+    ("geoip.dat", f"{DAT_RELEASES}/geoip.dat", 5_000_000),
+    ("anti-ad-domains.txt", "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt", 1_000_000),
+    ("adguard-filter.txt", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", 1_000_000),
+    ("adrules.txt", "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt", 1_000_000),
+    ("urlhaus.txt", "https://urlhaus.abuse.ch/downloads/text/", 500_000),
 ]
-
-# rule-provider.yaml 中 GEOSITE 分类 -> geosite.dat 分类名(大写)
-GEOSITE_MAP = {
-    "category-ads-all": "CATEGORY-ADS-ALL",
-    "cn": "CN",
-    "category-porn": "CATEGORY-PORN",
-    "google": "GOOGLE",
-    "microsoft": "MICROSOFT",
-    "telegram": "TELEGRAM",
-    "facebook": "FACEBOOK",
-    "twitter": "TWITTER",
-    "instagram": "INSTAGRAM",
-    "whatsapp": "WHATSAPP",
-    "discord": "DISCORD",
-    "reddit": "REDDIT",
-    "linkedin": "LINKEDIN",
-    "pinterest": "PINTEREST",
-    "tumblr": "TUMBLR",
-    "tiktok": "TIKTOK",
-    "quora": "QUORA",
-    "medium": "MEDIUM",
-    "youtube": "YOUTUBE",
-    "netflix": "NETFLIX",
-    "spotify": "SPOTIFY",
-    "twitch": "TWITCH",
-    "vimeo": "VIMEO",
-    "dailymotion": "DAILYMOTION",
-    "epicgames": "EPICGAMES",
-    "amazon": "AMAZON",
-    "ebay": "EBAY",
-    "paypal": "PAYPAL",
-    "cloudflare": "CLOUDFLARE",
-    "openai": "OPENAI",
-    "anthropic": "ANTHROPIC",
-    "perplexity": "PERPLEXITY",
-    "huggingface": "HUGGINGFACE",
-    "jetbrains": "JETBRAINS",
-    "gitlab": "GITLAB",
-    "xbox": "XBOX",
-    "nintendo": "NINTENDO",
-    "sony": "SONY",
-    "blizzard": "BLIZZARD",
-    "gog": "GOG",
-    "jable": "JABLE",
-    "category-media": "CATEGORY-MEDIA",
-    "category-finance": "CATEGORY-FINANCE",
-    "category-dev": "CATEGORY-DEV",
-    "category-games": "CATEGORY-GAMES",
-    "gfw": "GFW",
-}
-
-# geosite Domain 类型(与 v2ray proto 一致)
 TYPE_PLAIN, TYPE_REGEX, TYPE_DOMAIN, TYPE_FULL = 0, 1, 2, 3
-
-# 策略名映射:Clash -> Shadowrocket
-POLICY_MAP = {"REJECT": "REJECT", "DIRECT": "DIRECT", "PROXY": "Proxy", "直连优先": "直连优先"}
-
-# Clash 文件中的平台域名补充块标记(自动生成,生成 conf 时跳过)
-EXTRA_BEGIN = "# ===== 平台域名补充(自动生成,请勿手改)====="
-EXTRA_END = "# ===== 平台域名补充结束 ====="
-
-ADS_CATS = {"category-ads-all"}
-CN_CATS = {"cn"}
-PROXY_CATS = {c for c in GEOSITE_MAP if c not in ADS_CATS | CN_CATS}
-
-# 核心域名保护名单:这些域名若出现在 REJECT 类列表中,视为上游异常(投毒/误杀)
 PROTECTED_DOMAINS = {
-    "google.com", "youtube.com", "gmail.com", "github.com", "microsoft.com", "apple.com",
-    "amazon.com", "netflix.com", "facebook.com", "instagram.com", "whatsapp.com",
-    "twitter.com", "x.com", "telegram.org", "t.me", "discord.com", "reddit.com",
-    "linkedin.com", "cloudflare.com", "baidu.com", "qq.com", "weixin.qq.com",
-    "taobao.com", "tmall.com", "jd.com", "bilibili.com", "zhihu.com", "weibo.com",
-    "163.com", "126.com", "douyin.com", "deepseek.com", "kimi.com", "openai.com",
-    "anthropic.com", "claude.ai", "openrouter.ai", "huggingface.co", "sina.com.cn",
-    "sohu.com", "youku.com", "iqiyi.com", "alipay.com", "paypal.com", "steampowered.com",
+    "google.com", "youtube.com", "github.com", "microsoft.com", "apple.com",
+    "amazon.com", "netflix.com", "facebook.com", "openai.com", "baidu.com",
+    "qq.com", "taobao.com", "jd.com", "bilibili.com", "deepseek.com",
 }
-
-# 文件托管/CDN 平台:URL 级恶意链接常见于这些平台,但平台域名本身不可屏蔽
 HOSTING_DOMAINS = {
-    "github.com", "raw.githubusercontent.com", "githubusercontent.com", "github.io",
-    "googleusercontent.com", "cloudfront.net", "azureedge.net", "cloudflare.net",
-    "s3.amazonaws.com", "dropbox.com", "dropboxusercontent.com", "mega.nz",
-    "mega.co.nz", "mediafire.com", "box.com", "onedrive.com", "amazonaws.com",
-    "firebaseapp.com", "vercel.app", "netlify.app", "pages.dev", "gitlab.com",
+    "github.com", "githubusercontent.com", "github.io", "googleusercontent.com",
+    "cloudfront.net", "azureedge.net", "s3.amazonaws.com", "amazonaws.com",
+    "vercel.app", "netlify.app", "pages.dev", "gitlab.com",
 }
 
 
-# ---------- protobuf 解析(v2ray geosite / geoip 格式) ----------
+def atomic_write(path, content):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(content.rstrip() + "\n", encoding="utf-8")
+    os.replace(tmp, path)
 
-def parse_varint(buf, i):
-    val = 0
-    shift = 0
-    while True:
-        b = buf[i]
-        i += 1
-        val |= (b & 0x7F) << shift
-        if not (b & 0x80):
-            return val, i
+
+def parse_varint(buf, offset):
+    value = shift = 0
+    for _ in range(10):
+        if offset >= len(buf):
+            raise ValueError("truncated protobuf varint")
+        byte = buf[offset]
+        offset += 1
+        value |= (byte & 0x7f) << shift
+        if not byte & 0x80:
+            return value, offset
         shift += 7
+    raise ValueError("protobuf varint is too long")
+
+
+def skip_field(buf, offset, wire):
+    if wire == 0:
+        return parse_varint(buf, offset)[1]
+    if wire == 1:
+        end = offset + 8
+    elif wire == 2:
+        size, offset = parse_varint(buf, offset)
+        end = offset + size
+    elif wire == 5:
+        end = offset + 4
+    else:
+        raise ValueError(f"unsupported protobuf wire type: {wire}")
+    if end > len(buf):
+        raise ValueError("truncated protobuf field")
+    return end
+
+
+def fields(buf):
+    offset = 0
+    while offset < len(buf):
+        tag, offset = parse_varint(buf, offset)
+        number, wire = tag >> 3, tag & 7
+        if number == 0:
+            raise ValueError("invalid protobuf field number 0")
+        if wire == 2:
+            size, start = parse_varint(buf, offset)
+            end = start + size
+            if end > len(buf):
+                raise ValueError("truncated protobuf field")
+            yield number, wire, buf[start:end]
+            offset = end
+        elif wire == 0:
+            value, offset = parse_varint(buf, offset)
+            yield number, wire, value
+        else:
+            offset = skip_field(buf, offset, wire)
 
 
 def parse_domain(buf):
-    typ, val = TYPE_PLAIN, ""
-    i, n = 0, len(buf)
-    while i < n:
-        tag = buf[i]
-        i += 1
-        if tag == 0x08:
-            typ, i = parse_varint(buf, i)
-        elif tag == 0x12:
-            ln, i = parse_varint(buf, i)
-            val = buf[i : i + ln].decode("utf-8", "replace")
-            i += ln
-        else:
-            i += 1
-    return typ, val
+    typ, value = TYPE_PLAIN, ""
+    for number, wire, item in fields(buf):
+        if number == 1 and wire == 0:
+            typ = item
+        elif number == 2 and wire == 2:
+            value = item.decode("utf-8", "replace")
+    return typ, value
 
 
 def parse_cidr(buf):
-    ip_bytes, prefix = b"", 0
-    i, n = 0, len(buf)
-    while i < n:
-        tag = buf[i]
-        i += 1
-        if tag == 0x0A:
-            ln, i = parse_varint(buf, i)
-            ip_bytes = buf[i : i + ln]
-            i += ln
-        elif tag == 0x10:
-            prefix, i = parse_varint(buf, i)
-        else:
-            i += 1
-    return ip_bytes, prefix
+    raw, prefix = b"", 0
+    for number, wire, item in fields(buf):
+        if number == 1 and wire == 2:
+            raw = item
+        elif number == 2 and wire == 0:
+            prefix = item
+    return raw, prefix
 
 
-def parse_geosite_full(buf):
-    cc = None
-    domains = []
-    i, n = 0, len(buf)
-    while i < n:
-        tag = buf[i]
-        i += 1
-        if tag == 0x0A:
-            ln, i = parse_varint(buf, i)
-            cc = buf[i : i + ln].decode("utf-8", "replace")
-            i += ln
-        elif tag == 0x12:
-            ln, i = parse_varint(buf, i)
-            domains.append(parse_domain(buf[i : i + ln]))
-            i += ln
-        else:
-            i += 1
-    return cc, domains
-
-
-def parse_geoip_full(buf):
-    cc = None
-    cidrs = []
-    i, n = 0, len(buf)
-    while i < n:
-        tag = buf[i]
-        i += 1
-        if tag == 0x0A:
-            ln, i = parse_varint(buf, i)
-            cc = buf[i : i + ln].decode("utf-8", "replace")
-            i += ln
-        elif tag == 0x12:
-            ln, i = parse_varint(buf, i)
-            cidrs.append(parse_cidr(buf[i : i + ln]))
-            i += ln
-        else:
-            i += 1
-    return cc, cidrs
-
-
-def parse_list_file(buf):
-    records = []
-    i, n = 0, len(buf)
-    while i < n:
-        if buf[i] == 0x0A:
-            ln, i2 = parse_varint(buf, i + 1)
-            records.append(buf[i2 : i2 + ln])
-            i = i2 + ln
-        else:
-            i += 1
-    return records
-
-
-def load_geosite_cats(path):
-    cats = {}
-    data = open(path, "rb").read()
-    for blob in parse_list_file(data):
-        cc, domains = parse_geosite_full(blob)
-        if cc:
-            cats[cc] = domains
-    return cats
+def load_geosite(path):
+    result = {}
+    for number, wire, record in fields(Path(path).read_bytes()):
+        if number != 1 or wire != 2:
+            continue
+        code, domains = None, []
+        for field, kind, value in fields(record):
+            if field == 1 and kind == 2:
+                code = value.decode("utf-8", "replace").upper()
+            elif field == 2 and kind == 2:
+                domains.append(parse_domain(value))
+        if code:
+            result[code] = domains
+    return result
 
 
 def load_geoip_cn(path):
-    cn = []
-    data = open(path, "rb").read()
-    for blob in parse_list_file(data):
-        cc, cidrs = parse_geoip_full(blob)
-        if cc == "CN":
-            cn.extend(cidrs)
-    return cn
+    result = []
+    for number, wire, record in fields(Path(path).read_bytes()):
+        if number != 1 or wire != 2:
+            continue
+        code, cidrs = None, []
+        for field, kind, value in fields(record):
+            if field == 1 and kind == 2:
+                code = value.decode("utf-8", "replace").upper()
+            elif field == 2 and kind == 2:
+                cidrs.append(parse_cidr(value))
+        if code == "CN":
+            result.extend(cidrs)
+    return result
 
 
-# ---------- geosite 条目 -> 规则 ----------
-
-def geosite_to_rule(typ, val):
-    if "@" in val:
-        val = val.split("@", 1)[0]
-    for prefix, kind in (("regexp:", 1), ("full:", 3), ("domain:", 2), ("keyword:", 4), ("plain:", 0)):
-        if val.startswith(prefix):
-            typ, val = kind, val[len(prefix) :]
-            break
-    val = val.strip().lstrip(".")
-    if not val:
+def geosite_rule(typ, value):
+    value = value.split("@", 1)[0].strip().lstrip(".")
+    if not value:
         return None
-    if typ in (TYPE_PLAIN, TYPE_DOMAIN):
-        return f"DOMAIN-SUFFIX,{val}"
+    if typ == TYPE_PLAIN:
+        return f"DOMAIN-KEYWORD,{value}"
+    if typ == TYPE_DOMAIN:
+        return f"DOMAIN-SUFFIX,{value}"
     if typ == TYPE_FULL:
-        return f"DOMAIN,{val}"
-    if typ == TYPE_REGEX:
-        return f"URL-REGEX,{val}"
+        return f"DOMAIN,{value}"
+    # Shadowrocket 的 URL-REGEX 匹配 URL，不等价于 geosite 域名正则。
     return None
 
 
-def geosite_to_clash_rule(typ, val, policy):
-    if "@" in val:
-        val = val.split("@", 1)[0]
-    val = val.strip().lstrip(".")
-    if not val:
-        return None
-    if typ in (TYPE_PLAIN, TYPE_DOMAIN):
-        return f"DOMAIN-SUFFIX,{val},{policy}"
-    if typ == TYPE_FULL:
-        return f"DOMAIN,{val},{policy}"
-    if typ == TYPE_REGEX:
-        return f"DOMAIN-REGEX,{val},{policy}"
-    return None
+def ancestors(domain):
+    parts = domain.split(".")
+    return (".".join(parts[i:]) for i in range(1, len(parts)))
 
 
-# ---------- 社区列表解析 ----------
-
-def parse_adblock_domains(path):
-    """解析 adblock 格式(||domain^),返回纯域名集合"""
-    out = set()
-    for line in open(path, encoding="utf-8", errors="replace"):
-        line = line.strip()
-        if line.startswith("||") and line.endswith("^"):
-            d = line[2:-1]
-            if "*" in d or "/" in d or d.startswith(".") or not d:
-                continue
-            out.add(d)
-    return out
+def dedupe_by_ancestor(domains):
+    source = set(domains)
+    return {domain for domain in source if not any(parent in source for parent in ancestors(domain))}
 
 
-def parse_plain_domains(path):
-    """解析纯域名列表(每行一个域名,忽略 # 注释)"""
-    out = set()
-    for line in open(path, encoding="utf-8", errors="replace"):
-        d = line.strip().lower()
-        if not d or d.startswith("#"):
-            continue
-        if not all(c.isalnum() or c in ".-" for c in d):
-            continue
-        out.add(d)
-    return out
+def is_protected(domain):
+    return domain in PROTECTED_DOMAINS or any(parent in PROTECTED_DOMAINS for parent in ancestors(domain))
+
+
+def is_hosting(domain):
+    return domain in HOSTING_DOMAINS or any(parent in HOSTING_DOMAINS for parent in ancestors(domain))
+
+
+def is_private_ip(ip):
+    return any(ip.version == network.version and ip in network for network in PRIVATE_NETWORKS)
+
+
+def protected_conflicts(domains):
+    source = set(domains)
+    return sorted({candidate for protected in PROTECTED_DOMAINS
+                   for candidate in (protected, *ancestors(protected)) if candidate in source})
 
 
 def parse_urlhaus_hosts(path):
-    """从 URLhaus URL 列表提取 host。
-    过滤文件托管/CDN 平台:URL 级恶意链接不构成域名级恶意,
-    否则屏蔽 github.com 等平台会误杀整个站点。"""
-    out = set()
-    for line in open(path, encoding="utf-8", errors="replace"):
-        line = line.strip()
-        if not line or line.startswith("#"):
+    domains, networks = set(), set()
+    for raw in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
+        value = raw.strip().split(maxsplit=1)[0] if raw.strip() else ""
+        if not value or value.startswith("#"):
             continue
-        url = line.split(" ")[0]
-        host = url.split("/")[2] if "://" in url else url
-        if not host or "." not in host:
-            continue
-        host = host.lower()
-        # 平台域名本身不屏蔽(其父域命中同样跳过)
-        cur = host
-        skip = False
-        while "." in cur:
-            if cur in HOSTING_DOMAINS or cur in PROTECTED_DOMAINS:
-                skip = True
-                break
-            cur = cur.split(".", 1)[1]
-        if skip:
-            continue
-        out.add(host)
-    return out
-
-
-def dedupe_by_parent(domains):
-    """父域已在集合中的子域去掉"""
-    s = set(domains)
-    return {d for d in s if "." not in d or d.split(".", 1)[1] not in s}
-
-
-# ---------- 防投毒检查 ----------
-
-def check_protected_conflicts(domains, label):
-    """检查 REJECT 列表中是否出现保护域名本身或其父域"""
-    conflicts = []
-    for d in PROTECTED_DOMAINS:
-        cur = d
-        while "." in cur:
-            if cur in domains:
-                conflicts.append((d, cur))
-                break
-            cur = cur.split(".", 1)[1]
-    if conflicts:
-        print(f"  [安全拦截] {label} 包含受保护域名,疑似上游异常,已中止生成:")
-        for full, hit in conflicts[:20]:
-            print(f"    保护: {full}  <- 命中: {hit}")
-        return False
-    return True
-
-
-def download_source(name, url, dest, min_bytes):
-    if os.path.exists(dest):
-        size = os.path.getsize(dest)
-        if size >= min_bytes:
-            print(f"  复用 {name} ({size // 1024} KB)")
-            return
-        print(f"  [警告] 本地 {name} 过小({size} B),重新下载")
-    print(f"  下载 {name}")
-    urllib.request.urlretrieve(url, dest)
-    size = os.path.getsize(dest)
-    if size < min_bytes:
-        raise SystemExit(f"!! {name} 下载后仅 {size} B,低于下限 {min_bytes},视为异常终止")
-
-
-# ---------- Clash 文件补丁 ----------
-
-def patch_clash_platform_extra(repo_root, cats):
-    """把该平台补充分类展开为普通域名,混入两个 Clash 文件的平台段(gfw 之后)。
-    幂等:已存在则整体替换,并清理旧的分类行。"""
-    entries = cats.get("CATEGORY-PORN", [])
-    if not entries:
-        print("  [警告] geosite.dat 中无 CATEGORY-PORN 分类,跳过平台域名补充")
-        return
-    extra = set()
-    for typ, val in entries:
-        r = geosite_to_clash_rule(typ, val, "PROXY")
-        if r:
-            extra.add(r)
-    extra = sorted(extra)
-
-    def patch(path, indent, dash):
-        with open(path, encoding="utf-8") as f:
-            lines = f.read().split("\n")
-        out, in_extra, inserted = [], False, False
-        for line in lines:
-            stripped = line.strip()
-            if stripped.startswith(EXTRA_BEGIN):
-                in_extra = True
-                continue
-            if stripped.startswith(EXTRA_END):
-                in_extra = False
-                continue
-            if in_extra:
-                continue
-            if stripped.startswith("-") and "category-porn" in stripped:
-                continue
-            out.append(line)
-            if "GEOSITE,gfw,PROXY" in stripped and not inserted:
-                out.append(indent + EXTRA_BEGIN)
-                out.extend(indent + dash + r for r in extra)
-                out.append(indent + EXTRA_END)
-                inserted = True
-        if not inserted:
-            print(f"  [警告] {path}: 未找到 GEOSITE,gfw 锚点,平台域名补充未插入")
-            return
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("\n".join(out) + "\n")
-        print(f"  {path}: 平台域名补充 {len(extra)} 行")
-
-    clash_dir = os.path.join(repo_root, "clash")
-    patch(os.path.join(clash_dir, "rule-provider.yaml"), "", "- ")
-    patch(os.path.join(clash_dir, "clash-verge-merge.yaml"), "  ", "- ")
-
-
-def patch_clash_rule_sets(repo_root):
-    """注入 REJECT 规则集引用(ads-extra / malware)到两个 Clash 文件。幂等。"""
-    sets = [
-        ("ads-extra", f"{RULES_URL}/ads-extra.list"),
-        ("malware", f"{RULES_URL}/malware.list"),
-    ]
-    anchor = "GEOSITE,category-ads-all,REJECT"
-
-    def hit(line):
-        return anchor in line
-
-    # rule-provider.yaml
-    path = os.path.join(repo_root, "clash", "rule-provider.yaml")
-    with open(path, encoding="utf-8") as f:
-        lines = f.read().split("\n")
-    missing = [n for n, _ in sets if not any(f"RULE-SET,{n},REJECT" in l for l in lines)]
-    if missing:
-        out = []
-        for line in lines:
-            out.append(line)
-            if hit(line):
-                for name, _ in sets:
-                    out.append(f"- RULE-SET,{name},REJECT")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("\n".join(out) + "\n")
-        print(f"  {path}: 注入 {missing}")
-    else:
-        print(f"  {path}: 规则集引用已存在")
-
-    # clash-verge-merge.yaml
-    path = os.path.join(repo_root, "clash", "clash-verge-merge.yaml")
-    with open(path, encoding="utf-8") as f:
-        text = f.read()
-    if all(f"RULE-SET,{n},REJECT" in text for n, _ in sets) and "rule-providers:" in text:
-        print(f"  {path}: 规则集引用已存在")
-        return
-    provider_block = "rule-providers:\n"
-    for name, url in sets:
-        provider_block += f"""  {name}:
-    type: http
-    behavior: classical
-    url: {url}
-    path: ./rules/{name}.yaml
-    interval: 86400
-"""
-    lines = text.split("\n")
-    # 清理已有注入
-    out, in_prov = [], False
-    for line in lines:
-        if line.strip() == "rule-providers:":
-            in_prov = True
-            continue
-        if in_prov:
-            if line.strip() == "prepend-rules:":
-                in_prov = False
-            else:
-                continue
-        if any(f"RULE-SET,{n},REJECT" in line for n, _ in sets):
-            continue
-        out.append(line)
-    # 重新注入
-    final, prov_emitted = [], False
-    for line in out:
-        if line.strip() == "prepend-rules:" and not prov_emitted:
-            final.append(provider_block.rstrip("\n"))
-            prov_emitted = True
-        final.append(line)
-        if hit(line):
-            for name, _ in sets:
-                final.append(f"  - RULE-SET,{name},REJECT")
-    with open(path, "w", encoding="utf-8") as f:
-        f.write("\n".join(final) + "\n")
-    print(f"  {path}: 注入 {[n for n, _ in sets]}")
-
-
-# ---------- 主流程 ----------
-
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--offline", action="store_true", help="不下载数据源,复用本地文件")
-    ap.add_argument("--dat-dir", default=".", help="数据源文件所在目录")
-    args = ap.parse_args()
-
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    dat_dir = os.path.abspath(args.dat_dir)
-
-    print("== 1/8 准备数据源 ==")
-    paths = {}
-    if not args.offline:
-        for name, url, min_bytes, _ in SOURCES:
-            download_source(name, url, os.path.join(dat_dir, name), min_bytes)
-    for name, _, min_bytes, _ in SOURCES:
-        p = os.path.join(dat_dir, name)
-        if os.path.getsize(p) < min_bytes:
-            raise SystemExit(f"!! {name} 大小异常({os.path.getsize(p)} B),终止")
-        paths[name] = p
-    print(f"  共 {len(SOURCES)} 个数据源就绪")
-
-    print("== 2/8 解析 geosite.dat ==")
-    cats = load_geosite_cats(paths["geosite.dat"])
-    print(f"  共 {len(cats)} 个分类")
-
-    print("== 3/8 生成 geosite 规则集 ==")
-    out_dir = os.path.join(repo_root, "shadowrocket", "geosite")
-    os.makedirs(out_dir, exist_ok=True)
-
-    def expand(cat_names):
-        rules = set()
-        for name in cat_names:
-            dat_name = GEOSITE_MAP.get(name)
-            for typ, val in cats.get(dat_name, []):
-                r = geosite_to_rule(typ, val)
-                if r:
-                    rules.add(r)
-        return rules
-
-    ads = expand(ADS_CATS)
-    cn = expand(CN_CATS)
-    proxy = expand(PROXY_CATS)
-    print(f"  ads.list:   {len(ads):>7} 条")
-    print(f"  cn.list:    {len(cn):>7} 条")
-    print(f"  proxy.list: {len(proxy):>7} 条")
-    with open(os.path.join(out_dir, "ads.list"), "w") as f:
-        f.write("# 广告拦截域名(由 GEOSITE,category-ads-all 展开,自动更新)\n")
-        f.write("\n".join(sorted(ads)) + "\n")
-    with open(os.path.join(out_dir, "cn.list"), "w") as f:
-        f.write("# 中国大陆域名(由 GEOSITE,cn 展开,自动更新)\n")
-        f.write("\n".join(sorted(cn)) + "\n")
-    with open(os.path.join(out_dir, "proxy.list"), "w") as f:
-        f.write("# 海外平台域名(由 GEOSITE 平台分类展开,自动更新)\n")
-        f.write("\n".join(sorted(proxy)) + "\n")
-
-    print("== 4/8 生成 ipcn.list(geoip.dat CN) ==")
-    ipcn = set()
-    for ipb, prefix in load_geoip_cn(paths["geoip.dat"]):
         try:
-            ip = ipaddress.ip_address(ipb)
+            hostname = urlsplit(value if "://" in value else "//" + value).hostname
         except ValueError:
             continue
-        if ip.version == 4:
-            ipcn.add(f"IP-CIDR,{ip}/{prefix}")
-        else:
-            ipcn.add(f"IP-CIDR6,{ip}/{prefix}")
-    print(f"  ipcn.list:  {len(ipcn):>7} 条")
-    with open(os.path.join(out_dir, "ipcn.list"), "w") as f:
-        f.write("# 中国大陆 IP 段(由 geoip.dat CN 展开,自动更新)\n")
-        f.write("\n".join(sorted(ipcn)) + "\n")
+        if not hostname:
+            continue
+        hostname = hostname.rstrip(".").lower()
+        try:
+            ip = ipaddress.ip_address(hostname)
+        except ValueError:
+            if re.fullmatch(r"(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]{2,63}", hostname) and not is_protected(hostname) and not is_hosting(hostname):
+                domains.add(hostname)
+            continue
+        if not (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified) and not is_private_ip(ip):
+            networks.add(f"{'IP-CIDR' if ip.version == 4 else 'IP-CIDR6'},{ip}/{ip.max_prefixlen},no-resolve")
+    return dedupe_by_ancestor(domains), networks
 
-    print("== 5/8 生成 ads-extra.list(多源交叉验证) ==")
-    antiad = parse_plain_domains(paths["anti-ad-domains.txt"])
-    adguard = parse_adblock_domains(paths["adguard-filter.txt"])
-    adrules = parse_adblock_domains(paths["adrules.txt"])
-    print(f"  anti-AD : {len(antiad):>7}")
-    print(f"  AdGuard : {len(adguard):>7}")
-    print(f"  乘风    : {len(adrules):>7}")
-    # 至少两源共现:单源独有条目不采用(交叉验证,降低单源异常影响)
-    ads_extra = (antiad & adguard) | (antiad & adrules) | (adguard & adrules)
-    ads_extra = dedupe_by_parent(ads_extra)
-    print(f"  多源共现去重: {len(ads_extra):>7} 条")
-    if not check_protected_conflicts(ads_extra, "ads-extra.list"):
-        sys.exit(1)
-    rules_dir = os.path.join(repo_root, "rules")
-    os.makedirs(rules_dir, exist_ok=True)
-    with open(os.path.join(rules_dir, "ads-extra.list"), "w") as f:
-        f.write("# 广告域名补充(多源交叉验证,自动更新)\n")
-        f.write("\n".join(f"DOMAIN-SUFFIX,{d}" for d in sorted(ads_extra)) + "\n")
 
-    print("== 6/8 生成 malware.list(恶意/诈骗/钓鱼) ==")
-    urlhaus = parse_urlhaus_hosts(paths["urlhaus.txt"])
-    fake = parse_adblock_domains(paths["hagezi-fake.txt"])
-    print(f"  URLhaus: {len(urlhaus):>7}")
-    print(f"  hagezi : {len(fake):>7}")
-    malware = dedupe_by_parent(urlhaus | fake)
-    print(f"  合并去重: {len(malware):>7} 条")
-    if not check_protected_conflicts(malware, "malware.list"):
-        sys.exit(1)
-    with open(os.path.join(rules_dir, "malware.list"), "w") as f:
-        f.write("# 恶意/诈骗/钓鱼域名(自动更新)\n")
-        f.write("\n".join(f"DOMAIN-SUFFIX,{d}" for d in sorted(malware)) + "\n")
+def parse_adblock(path):
+    result = set()
+    for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip().lower()
+        if line.startswith("||") and line.endswith("^"):
+            domain = line[2:-1]
+            if re.fullmatch(r"[a-z0-9.-]+", domain):
+                result.add(domain)
+    return result
 
-    print("== 7/8 同步 Clash 文件 ==")
-    patch_clash_platform_extra(repo_root, cats)
-    patch_clash_rule_sets(repo_root)
 
-    print("== 8/8 生成 shadowrocket.conf ==")
-    rule_path = os.path.join(repo_root, "clash", "rule-provider.yaml")
+def parse_plain(path):
+    return {line.strip().lower() for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
+            if re.fullmatch(r"[a-z0-9.-]+", line.strip().lower())}
+
+
+def parse_policy_source(path):
     rules = []
-    in_extra = False
-    with open(rule_path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith(EXTRA_BEGIN):
-                in_extra = True
-                continue
-            if line.startswith(EXTRA_END):
-                in_extra = False
-                continue
-            if in_extra:
-                continue
-            if line.startswith("#"):
-                continue
-            if not line.startswith("- "):
-                continue
-            body = line[2:].strip()
-            parts = [p.strip() for p in body.split(",")]
-            rules.append(parts)
-
-    conf_lines = []
-    conf_lines.append("# 分流规则 - Shadowrocket")
-    conf_lines.append("# 用法:Shadowrocket -> 右上角 + -> 类型选 Subscribe(订阅) -> 粘贴本文件 URL")
-    conf_lines.append("# 规则集(RULE-SET)每次刷新配置自动更新,无需手动维护")
-    conf_lines.append("")
-    conf_lines.append("[General]")
-    conf_lines.append("dns-server = 223.5.5.5,119.29.29.29,8.8.8.8")
-    conf_lines.append("ipv6 = true")
-    conf_lines.append("")
-    conf_lines.append("[Proxy Group]")
-    conf_lines.append("Proxy = select,自动选择,手动切换")
-    conf_lines.append("自动选择 = url-test,Proxy,url=http://www.gstatic.com/generate_204,interval=300,tolerance=50")
-    conf_lines.append("手动切换 = select,自动选择")
-    conf_lines.append("直连优先 = fallback,DIRECT,Proxy,url=http://connect.rom.miui.com/generate_204,interval=300")
-    conf_lines.append("")
-    conf_lines.append("[Rule]")
-
-    last_proxy_geosite = None
-    for idx, parts in enumerate(rules):
-        if parts[0] == "GEOSITE" and parts[1] in PROXY_CATS:
-            last_proxy_geosite = idx
-
-    ads_extra_emitted = False
-    malware_emitted = False
-    for idx, parts in enumerate(rules):
-        kind = parts[0]
-        if kind == "GEOSITE":
-            name = parts[1]
-            if name in ADS_CATS:
-                conf_lines.append(f"RULE-SET,{BASE_URL}/ads.list,REJECT")
-                if not ads_extra_emitted:
-                    conf_lines.append(f"RULE-SET,{RULES_URL}/ads-extra.list,REJECT")
-                    ads_extra_emitted = True
-                if not malware_emitted:
-                    conf_lines.append(f"RULE-SET,{RULES_URL}/malware.list,REJECT")
-                    malware_emitted = True
-            elif name in CN_CATS:
-                conf_lines.append(f"RULE-SET,{BASE_URL}/cn.list,DIRECT")
-            elif name in PROXY_CATS:
-                if idx == last_proxy_geosite:
-                    conf_lines.append(f"RULE-SET,{BASE_URL}/proxy.list,Proxy")
-            else:
-                print(f"  [警告] 未映射的 GEOSITE 分类: {name},已跳过")
+    for line_number, raw in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
             continue
-        if kind == "RULE-SET":
-            continue
-        if kind == "MATCH":
-            conf_lines.append(f"FINAL,{POLICY_MAP.get(parts[1], parts[1])}")
-            continue
-        if kind == "GEOIP" and parts[1] == "CN":
-            conf_lines.append(f"RULE-SET,{BASE_URL}/ipcn.list,DIRECT")
-            conf_lines.append(f"GEOIP,CN,{POLICY_MAP.get(parts[2], parts[2])}")
-            continue
-        sr_policy = POLICY_MAP.get(parts[-1], parts[-1])
-        conf_lines.append(",".join(parts[:-1] + [sr_policy]))
+        parts = [part.strip() for part in line.split(",")]
+        policy_index = len(parts) - 2 if parts[-1] == "no-resolve" else len(parts) - 1
+        policy = parts[policy_index]
+        if policy not in ALLOWED_POLICIES:
+            raise ValueError(f"{path}:{line_number}: invalid policy {policy!r}")
+        body = parts[:policy_index] + parts[policy_index + 1:]
+        if len(body) < 2:
+            raise ValueError(f"{path}:{line_number}: malformed rule")
+        group = policy
+        if body[0].startswith("IP-CIDR"):
+            try:
+                network = ipaddress.ip_network(body[1], strict=False)
+            except ValueError as error:
+                raise ValueError(f"{path}:{line_number}: invalid network {body[1]!r}") from error
+            if any(network.version == item.version and network.subnet_of(item) for item in PRIVATE_NETWORKS):
+                if policy != "DIRECT":
+                    raise ValueError(f"{path}:{line_number}: private networks must use DIRECT")
+                group = "PRIVATE"
+        rules.append((group, policy, ",".join(body)))
+    if not rules:
+        raise ValueError(f"{path}: zero rules")
+    rules.sort(key=lambda item: POLICY_ORDER[item[0]])
+    return rules
 
-    conf_path = os.path.join(repo_root, "shadowrocket", "shadowrocket.conf")
-    with open(conf_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(conf_lines) + "\n")
 
-    stat = Counter()
-    for line in conf_lines:
-        if line.startswith("RULE-SET"):
-            stat["RULE-SET"] += 1
-        elif line.startswith("FINAL"):
-            stat["FINAL"] += 1
-        elif line.startswith("GEOIP"):
-            stat["GEOIP"] += 1
-        elif line.startswith("IP-CIDR"):
-            stat["IP-CIDR"] += 1
-        elif line.startswith("DOMAIN-SUFFIX"):
-            stat["DOMAIN-SUFFIX"] += 1
-        elif line.startswith("DOMAIN,"):
-            stat["DOMAIN"] += 1
-    print(f"  本地 [Rule] 共 {len([l for l in conf_lines if l and not l.startswith(('#','[',' '))])} 行(含 RULE-SET)")
-    print(f"  规则统计: {dict(stat)}")
-    print(f"\n完成!产物:")
-    for p in (conf_path, os.path.join(out_dir, "ads.list"), os.path.join(out_dir, "cn.list"),
-              os.path.join(out_dir, "proxy.list"), os.path.join(out_dir, "ipcn.list"),
-              os.path.join(rules_dir, "ads-extra.list"), os.path.join(rules_dir, "malware.list")):
-        print(f"  {os.path.relpath(p, repo_root)}  ({os.path.getsize(p) // 1024} KB)")
+def attach_policy(rule, policy):
+    if rule.endswith(",no-resolve"):
+        return f"{rule[:-11]},{policy},no-resolve"
+    return f"{rule},{policy}"
+
+
+def write_client_outputs(root, rules):
+    target = {"REJECT": "广告拦截", "DIRECT": "DIRECT", "SENSITIVE": "敏感服务",
+              "DIRECT-PREFERRED": "直连优先", "PROXY": "日常代理"}
+    providers = {name: [] for name in ("reject", "direct", "sensitive", "direct-preferred", "proxy")}
+    names = {"REJECT": "reject", "DIRECT": "direct", "SENSITIVE": "sensitive",
+             "DIRECT-PREFERRED": "direct-preferred", "PROXY": "proxy"}
+    for group, policy, body in rules:
+        if not body.startswith("GEOSITE,") and group != "PRIVATE":
+            providers[names[policy]].append(body)
+    for supplemental in (root / "rules" / "ads-extra.list", root / "rules" / "malware.list"):
+        if supplemental.exists():
+            providers["reject"].extend(line.strip() for line in supplemental.read_text(encoding="utf-8").splitlines()
+                                       if line.strip() and not line.startswith("#"))
+    for name, entries in providers.items():
+        atomic_write(root / "rules" / f"{name}.list", "# 自动生成；不含策略目标\n" + "\n".join(dict.fromkeys(entries)))
+
+    payload = [body for _, policy, body in rules if policy == "PROXY"]
+    atomic_write(root / "clash" / "rule-provider.yaml", "# 通用代理规则 provider\npayload:\n" +
+                 "\n".join(f"  - {json.dumps(rule, ensure_ascii=False)}" for rule in payload))
+
+    provider_block = []
+    for name in providers:
+        provider_block.extend([
+            f"  {name}:", "    type: http", "    behavior: classical", "    format: text",
+            f"    url: {RAW}/rules/{name}.list", f"    path: ./rules/{name}.list", "    interval: 86400",
+        ])
+    private = [body for group, _, body in rules if group == "PRIVATE"]
+    geosite = {policy: [body for _, item_policy, body in rules
+                        if item_policy == policy and body.startswith("GEOSITE,")]
+               for policy in ALLOWED_POLICIES}
+    force_direct = [f"DOMAIN-SUFFIX,{domain}" for domain in sorted(FORCE_DIRECT_DOMAINS)]
+    legacy = [
+        "# Legacy：仅兼容机场已有 PROXY 组；推荐使用 clash-verge-script.js",
+        "profile:", "  store-selected: true", "rule-providers:", *provider_block, "rules:",
+        *[f"  - {attach_policy(rule, 'DIRECT')}" for rule in force_direct],
+        "  - RULE-SET,reject,REJECT", *[f"  - {attach_policy(rule, 'REJECT')}" for rule in geosite["REJECT"]],
+        *[f"  - {attach_policy(rule, 'DIRECT')}" for rule in private],
+        "  - RULE-SET,sensitive,PROXY", *[f"  - {attach_policy(rule, 'PROXY')}" for rule in geosite["SENSITIVE"]],
+        "  - RULE-SET,direct,DIRECT", *[f"  - {attach_policy(rule, 'DIRECT')}" for rule in geosite["DIRECT"]],
+        "  - RULE-SET,direct-preferred,DIRECT",
+        *[f"  - {attach_policy(rule, 'DIRECT')}" for rule in geosite["DIRECT-PREFERRED"]],
+        "  - RULE-SET,proxy,PROXY", *[f"  - {attach_policy(rule, 'PROXY')}" for rule in geosite["PROXY"]],
+    ]
+    legacy.extend([
+        "  - GEOIP,CN,DIRECT,no-resolve", "  - MATCH,DIRECT",
+    ])
+    atomic_write(root / "clash" / "clash-verge-merge.yaml", "\n".join(legacy))
+
+    sr = [
+        "# Shadowrocket 完整配置；策略组通过订阅节点正则自动装载",
+        "[General]", "dns-server = https://doh.pub/dns-query,https://dns.alidns.com/dns-query",
+        "fallback-dns-server = 223.5.5.5,119.29.29.29", "ipv6 = true", "",
+        "[Proxy Group]",
+        "日常代理 = url-test,policy-regex-filter=^(?!.*(?:流量|到期|剩余|官网|套餐)).+$,url=http://www.gstatic.com/generate_204,interval=300,tolerance=50",
+        "敏感服务 = select,policy-regex-filter=^(?!.*(?:流量|到期|剩余|官网|套餐)).+$",
+        "直连优先 = select,DIRECT,日常代理", "广告拦截 = select,REJECT,DIRECT", "", "[Rule]",
+        *[attach_policy(rule, "DIRECT") for rule in force_direct],
+        f"RULE-SET,{RAW}/rules/reject.list,广告拦截",
+        f"RULE-SET,{RAW}/shadowrocket/geosite/ads.list,广告拦截",
+        *[attach_policy(rule, "DIRECT") for rule in private],
+        f"RULE-SET,{RAW}/rules/sensitive.list,敏感服务",
+        f"RULE-SET,{RAW}/shadowrocket/geosite/sensitive.list,敏感服务",
+        f"RULE-SET,{RAW}/rules/direct.list,DIRECT",
+        f"RULE-SET,{RAW}/shadowrocket/geosite/cn.list,DIRECT",
+        f"RULE-SET,{RAW}/rules/direct-preferred.list,直连优先",
+        *([f"RULE-SET,{RAW}/shadowrocket/geosite/direct-preferred.list,直连优先"]
+          if geosite["DIRECT-PREFERRED"] else []),
+        f"RULE-SET,{RAW}/rules/proxy.list,日常代理",
+        f"RULE-SET,{RAW}/shadowrocket/geosite/proxy.list,日常代理",
+    ]
+    regex_skipped = sum(body.startswith("DOMAIN-REGEX,") for _, _, body in rules)
+    sr.extend([
+        f"RULE-SET,{RAW}/shadowrocket/geosite/ipcn.list,DIRECT", "GEOIP,CN,DIRECT", "FINAL,DIRECT",
+    ])
+    atomic_write(root / "shadowrocket" / "shadowrocket.conf", "\n".join(sr))
+    return regex_skipped
+
+
+def download_sources(dat_dir):
+    manifest = {"generated_at": "CI", "sources": []}
+    dat_dir.mkdir(parents=True, exist_ok=True)
+    for name, url, minimum in SOURCES:
+        dest = dat_dir / name
+        subprocess.run(["curl", "--fail", "--location", "--retry", "3", "--connect-timeout", "15",
+                        "--max-time", "120", "--output", str(dest), url], check=True)
+        if dest.stat().st_size < minimum:
+            raise RuntimeError(f"{name}: {dest.stat().st_size} bytes, minimum is {minimum}")
+        manifest["sources"].append({"name": name, "url": url, "version": "latest",
+                                    "sha256": hashlib.sha256(dest.read_bytes()).hexdigest()})
+    return manifest
+
+
+def generate_upstream(root, dat_dir, rules):
+    cats = load_geosite(dat_dir / "geosite.dat")
+    output_by_policy = {"REJECT": "ads", "DIRECT": "cn", "SENSITIVE": "sensitive",
+                       "DIRECT-PREFERRED": "direct-preferred", "PROXY": "proxy"}
+    categories = {output: [] for output in output_by_policy.values()}
+    for _, policy, body in rules:
+        if not body.startswith("GEOSITE,"):
+            continue
+        category = body.split(",", 1)[1].strip()
+        output = output_by_policy.get(policy)
+        if output and category and category not in categories[output]:
+            categories[output].append(category)
+    required_outputs = {"ads", "cn", "sensitive", "proxy"}
+    missing = [output for output in required_outputs if not categories[output]]
+    if missing:
+        raise RuntimeError(f"policy source has no GEOSITE categories for: {', '.join(sorted(missing))}")
+    for output, wanted in categories.items():
+        if not wanted:
+            continue
+        result, skipped = set(), 0
+        for category in wanted:
+            # load_geosite normalizes category codes to upper case; policy source remains lower case.
+            for typ, value in cats.get(category.upper(), []):
+                rule = geosite_rule(typ, value)
+                if rule:
+                    result.add(rule)
+                elif typ == TYPE_REGEX:
+                    skipped += 1
+        atomic_write(root / "shadowrocket" / "geosite" / f"{output}.list",
+                     f"# 自动生成；跳过无法可靠转换的域名正则 {skipped} 条\n" + "\n".join(sorted(result)))
+        print(f"{output}.list: {len(result)} rules, skipped regex: {skipped}")
+    ip_rules = set()
+    for packed, prefix in load_geoip_cn(dat_dir / "geoip.dat"):
+        try:
+            ip = ipaddress.ip_address(packed)
+            ip_rules.add(f"{'IP-CIDR' if ip.version == 4 else 'IP-CIDR6'},{ip}/{prefix},no-resolve")
+        except ValueError:
+            continue
+    atomic_write(root / "shadowrocket" / "geosite" / "ipcn.list", "# 自动生成\n" + "\n".join(sorted(ip_rules)))
+    ads = dedupe_by_ancestor((parse_plain(dat_dir / "anti-ad-domains.txt") & parse_adblock(dat_dir / "adguard-filter.txt")) |
+                             (parse_plain(dat_dir / "anti-ad-domains.txt") & parse_adblock(dat_dir / "adrules.txt")) |
+                             (parse_adblock(dat_dir / "adguard-filter.txt") & parse_adblock(dat_dir / "adrules.txt")))
+    malware_domains, malware_ips = parse_urlhaus_hosts(dat_dir / "urlhaus.txt")
+    for label, domains in (("ads-extra", ads), ("malware", malware_domains)):
+        conflict = protected_conflicts(domains)
+        if conflict:
+            raise RuntimeError(f"{label}: protected domain conflict: {conflict[:5]}")
+    atomic_write(root / "rules" / "ads-extra.list", "# 自动生成\n" + "\n".join(f"DOMAIN-SUFFIX,{d}" for d in sorted(ads)))
+    malware = [f"DOMAIN-SUFFIX,{d}" for d in sorted(dedupe_by_ancestor(malware_domains))] + sorted(malware_ips)
+    atomic_write(root / "rules" / "malware.list", "# 自动生成\n" + "\n".join(malware))
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--offline", action="store_true")
+    parser.add_argument("--clients-only", action="store_true")
+    parser.add_argument("--dat-dir", default=".temp/upstream")
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parent.parent
+    rules = parse_policy_source(root / "rules" / "policy.list")
+    if args.clients_only:
+        skipped = write_client_outputs(root, rules)
+        print(f"client outputs generated; skipped regex: {skipped}")
+        return
+    dat_dir = Path(args.dat_dir).resolve()
+    if args.offline:
+        manifest = {"generated_at": "offline", "sources": []}
+        for name, url, minimum in SOURCES:
+            path = dat_dir / name
+            if not path.exists() or path.stat().st_size < minimum:
+                raise RuntimeError(f"missing or undersized offline source: {path}")
+            manifest["sources"].append({"name": name, "url": url, "version": "latest",
+                                        "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    else:
+        manifest = download_sources(dat_dir)
+    generate_upstream(root, dat_dir, rules)
+    skipped = write_client_outputs(root, rules)
+    print(f"client outputs generated; skipped regex: {skipped}")
+    atomic_write(root / "rules" / "sources.json", json.dumps(manifest, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        raise SystemExit(1)
