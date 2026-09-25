@@ -5,37 +5,38 @@
       "name": "geosite.dat",
       "url": "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
       "version": "latest",
-      "sha256": "67cdd6283e45196273a28d5cba807e027b27aba7c034d8b6f9d0ef12b1e08255"
+      "sha256": "69763a20940b17dcbe08f15dc76edf2b5406e980c0f58e6f0bb91ff71e933b9d"
     },
     {
       "name": "geoip.dat",
       "url": "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
       "version": "latest",
-      "sha256": "53dc90b50877d2ed974ea81fb0fbdcbac84e189c0ac7fdcab7a966bb5e36b6e6"
+      "sha256": "3cf2236c19063c1c80803368cca5ff589c5033129fdf9ba154230c689b81fc2a"
     },
     {
       "name": "anti-ad-domains.txt",
       "url": "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt",
       "version": "latest",
-      "sha256": "2a6bbcec70c981d9045e3717b401381e06d9a467cd9d64b1d518c8a6fd173dac"
+      "sha256": "476c0a6a04ff941ef9a8fc5ca159c69717f5dd44e135b9c7256a235ae63f60ac"
     },
     {
       "name": "adguard-filter.txt",
       "url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
       "version": "latest",
-      "sha256": "79750845e83fe874a2763ea04c01d46e281a37811669f267b281d95bbeb13571"
+      "sha256": "12d3c937e097ffb5ce72712a8dd51791e88a10cecb979fee72b8f67cc70f65b9"
     },
     {
       "name": "adrules.txt",
       "url": "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt",
       "version": "latest",
-      "sha256": "24b73b99b300df745cbe7c212496f933ee1292b5c73b68992baa8678b4d043aa"
+      "sha256": "d453f67327a85cc16d8d43366a71ee63ff21960da33223227cb87377d4c7278c"
     },
     {
       "name": "urlhaus.txt",
       "url": "https://urlhaus.abuse.ch/downloads/text/",
       "version": "latest",
-      "sha256": "0809a03d301fc84769b6981092d97d710ca0c13663c949189daedc7e77b23a5d"
+      "sha256": "dd5a2b4799f6dc2ce894c7b4d1c8988d539d3828367e1074e1d82a61274c7a35"
     }
-  ]
+  ],
+  "snapshot_sha256": "98f4ddd17745e31cd235af7a5cc621ec0f2b0935e8c0748a63e5b15e25636c28"
 }

@@ -2,7 +2,9 @@
 """生成产物的结构、安全与异常差异门禁。"""
 
 import argparse
+import hashlib
 import ipaddress
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -38,6 +40,22 @@ def rule_lines(path):
 
 def validate():
     issues = []
+    manifest_path = ROOT / "rules/sources.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        snapshot = manifest.get("snapshot_sha256", "")
+        sources = manifest.get("sources") or []
+        if len(snapshot) != 64 or any(char not in "0123456789abcdef" for char in snapshot):
+            issues.append("rules/sources.json: missing or invalid snapshot_sha256")
+        if not sources:
+            issues.append("rules/sources.json: no source entries")
+        else:
+            material = "\n".join(f"{item['name']}:{item['sha256']}" for item in sources)
+            expected = hashlib.sha256(material.encode("utf-8")).hexdigest()
+            if snapshot != expected:
+                issues.append("rules/sources.json: snapshot_sha256 does not match source entries")
+    except (OSError, ValueError, TypeError) as error:
+        issues.append(f"rules/sources.json: invalid manifest ({error})")
     for name in ("reject", "direct", "sensitive", "direct-preferred", "proxy"):
         path = ROOT / "rules" / f"{name}.list"
         entries = rule_lines(path) if path.exists() else []
@@ -152,9 +170,15 @@ def diff_guard():
         new_count = len(rule_lines(path))
         old_count = len([line for line in old.splitlines() if line.strip() and not line.lstrip().startswith("#")])
         # 首次从旧版单文件迁移到统一政策源时允许预期的大幅缩减。
-        migration = relative in {"clash/clash-verge-merge.yaml", "clash/rule-provider.yaml",
-                                 "shadowrocket/shadowrocket.conf"} and "clash-verge-script.js" not in subprocess.run(
+        legacy_client_migration = relative in {"clash/clash-verge-merge.yaml", "clash/rule-provider.yaml",
+                                                "shadowrocket/shadowrocket.conf"} and "clash-verge-script.js" not in subprocess.run(
             ["git", "ls-tree", "-r", "--name-only", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout
+        # 旧远端 malware.list 来自已移除的多源生成器；本次迁移到 URLhaus 精确解析后
+        # 只放行这一个文件的一次性缩减。提交后新文件头不再匹配，后续异常缩减仍会触发门禁。
+        legacy_malware_migration = (relative == "rules/malware.list"
+                                     and old.splitlines()
+                                     and old.splitlines()[0].startswith("# 恶意/诈骗/钓鱼域名"))
+        migration = legacy_client_migration or legacy_malware_migration
         if old_count and not migration:
             if new_count == 0:
                 issues.append(f"{relative}: became empty")
