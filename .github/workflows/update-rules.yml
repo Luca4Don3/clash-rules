@@ -18,16 +18,24 @@ jobs:
 
       - name: Download data sources
         run: |
-          curl -sL -o /tmp/geosite.dat https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat
-          curl -sL -o /tmp/geoip.dat https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat
-          curl -sL -o /tmp/anti-ad-domains.txt https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt
-          curl -sL -o /tmp/adguard-filter.txt https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
-          curl -sL -o /tmp/adrules.txt https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt
-          curl -sL -o /tmp/urlhaus.txt https://urlhaus.abuse.ch/downloads/text/
-          curl -sL -o /tmp/hagezi-fake.txt https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/fake.txt
+          mkdir -p .temp/upstream
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 120 -o .temp/upstream/geosite.dat https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 120 -o .temp/upstream/geoip.dat https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 120 -o .temp/upstream/anti-ad-domains.txt https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 120 -o .temp/upstream/adguard-filter.txt https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 120 -o .temp/upstream/adrules.txt https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 120 -o .temp/upstream/urlhaus.txt https://urlhaus.abuse.ch/downloads/text/
 
       - name: Generate rules
-        run: python3 tools/gen-shadowrocket.py --offline --dat-dir /tmp
+        run: python3 tools/gen-shadowrocket.py --offline --dat-dir .temp/upstream
+
+      - name: Test and validate
+        run: |
+          python3 -m unittest discover -s tests -v
+          test -s clash/clash-verge-script.js
+          git add clash/clash-verge-script.js clash/clash-verge-merge.yaml clash/rule-provider.yaml shadowrocket/shadowrocket.conf shadowrocket/geosite/*.list rules/ads-extra.list rules/malware.list rules/reject.list rules/direct.list rules/sensitive.list rules/direct-preferred.list rules/proxy.list rules/sources.json
+          python3 tools/gen-shadowrocket.py --offline --dat-dir .temp/upstream
+          git diff --exit-code
 
       - name: Guard against suspicious changes
         run: |
@@ -43,7 +51,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
-            git add -A
             git commit -m "chore: auto-update rules from upstream"
             git push
           else
