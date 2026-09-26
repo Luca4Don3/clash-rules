@@ -56,6 +56,7 @@ def validate():
                 issues.append("rules/sources.json: snapshot_sha256 does not match source entries")
     except (OSError, ValueError, TypeError) as error:
         issues.append(f"rules/sources.json: invalid manifest ({error})")
+    provider_domains = {}
     for name in ("reject", "direct", "sensitive", "direct-preferred", "proxy"):
         path = ROOT / "rules" / f"{name}.list"
         entries = rule_lines(path) if path.exists() else []
@@ -63,10 +64,20 @@ def validate():
             issues.append(f"{path.relative_to(ROOT)}: zero rules")
         if len(entries) != len(set(entries)):
             issues.append(f"{path.relative_to(ROOT)}: duplicate rules")
+        provider_domains[name] = {
+            entry.split(",", 1)[1] for entry in entries
+            if entry.split(",", 1)[0] in {"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD"}
+            and "," in entry
+        }
         for entry in entries:
             if entry.split(",", 1)[0] not in VALID_TYPES:
                 issues.append(f"{path.relative_to(ROOT)}: invalid type: {entry}")
                 break
+    reject_domains = provider_domains.get("reject", set())
+    for name in ("direct", "sensitive", "direct-preferred", "proxy"):
+        overlap = sorted(reject_domains & provider_domains.get(name, set()))
+        if overlap:
+            issues.append(f"rules/{name}.list overlaps rules/reject.list: {overlap[:10]}")
     reject_entries = rule_lines(ROOT / "rules/reject.list") if (ROOT / "rules/reject.list").exists() else []
     private_conflicts = []
     for entry in reject_entries:

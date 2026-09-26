@@ -232,14 +232,41 @@ def parse_urlhaus_hosts(path):
     return domains, networks
 
 
+def abp_domain(line, prefix):
+    if not line.startswith(prefix):
+        return None
+    body = line[len(prefix):]
+    if "^" not in body:
+        return None
+    domain = body.split("^", 1)[0].split("|", 1)[0]
+    return domain if re.fullmatch(r"[a-z0-9.-]+", domain) else None
+
+
 def parse_adblock(path):
     result = set()
-    for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
-        line = line.strip().lower()
-        if line.startswith("||") and line.endswith("^"):
-            domain = line[2:-1]
-            if re.fullmatch(r"[a-z0-9.-]+", domain):
+    for raw in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip().lower()
+        if not line.startswith("||") or "^" not in line:
+            continue
+        domain, options = line[2:].split("^", 1)
+        if options:
+            modifiers = {item.split("=", 1)[0].lstrip("$") for item in options.split(",")}
+            if "important" not in modifiers:
+                continue
+        if re.fullmatch(r"[a-z0-9.-]+", domain):
+            result.add(domain)
+    return result
+
+
+def parse_adblock_exceptions(path):
+    result = set()
+    for raw in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip().lower()
+        for prefix in ("@@||", "@@|"):
+            domain = abp_domain(line, prefix)
+            if domain:
                 result.add(domain)
+                break
     return result
 
 
@@ -421,9 +448,16 @@ def generate_upstream(root, dat_dir, rules):
         except ValueError:
             continue
     atomic_write(root / "shadowrocket" / "geosite" / "ipcn.list", "# 自动生成\n" + "\n".join(sorted(ip_rules)))
-    ads = dedupe_by_ancestor((parse_plain(dat_dir / "anti-ad-domains.txt") & parse_adblock(dat_dir / "adguard-filter.txt")) |
-                             (parse_plain(dat_dir / "anti-ad-domains.txt") & parse_adblock(dat_dir / "adrules.txt")) |
-                             (parse_adblock(dat_dir / "adguard-filter.txt") & parse_adblock(dat_dir / "adrules.txt")))
+    anti_ads = parse_plain(dat_dir / "anti-ad-domains.txt")
+    adguard_ads = parse_adblock(dat_dir / "adguard-filter.txt")
+    cats_ads = parse_adblock(dat_dir / "adrules.txt")
+    ad_exceptions = (parse_adblock_exceptions(dat_dir / "adguard-filter.txt") |
+                     parse_adblock_exceptions(dat_dir / "adrules.txt"))
+    anti_ads -= ad_exceptions
+    adguard_ads -= ad_exceptions
+    cats_ads -= ad_exceptions
+    ads = dedupe_by_ancestor((anti_ads & adguard_ads) | (anti_ads & cats_ads) | (adguard_ads & cats_ads))
+    print(f"ad sources: anti-AD={len(anti_ads)} AdGuard={len(adguard_ads)} Cats={len(cats_ads)} exceptions={len(ad_exceptions)}")
     malware_domains, malware_ips = parse_urlhaus_hosts(dat_dir / "urlhaus.txt")
     for label, domains in (("ads-extra", ads), ("malware", malware_domains)):
         conflict = protected_conflicts(domains)
