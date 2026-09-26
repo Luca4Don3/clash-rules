@@ -4,6 +4,7 @@ DOMAIN-SUFFIX,oaistatic.com
 DOMAIN-SUFFIX,oaiusercontent.com
 DOMAIN-SUFFIX,sora.com
 DOMAIN-SUFFIX,auth0.com
+DOMAIN-KEYWORD,chatgpt-async-webps-prod-
 DOMAIN-SUFFIX,perplexity.ai
 DOMAIN-SUFFIX,huggingface.co
 DOMAIN-SUFFIX,openrouter.ai

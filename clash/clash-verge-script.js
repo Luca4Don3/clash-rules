@@ -75,6 +75,7 @@ function main(config) {
     "GEOSITE,cn,DIRECT",
     "RULE-SET,direct-preferred,直连优先",
     "RULE-SET,proxy,日常代理",
+    "GEOSITE,geolocation-!cn,日常代理",
     "GEOSITE,gfw,日常代理",
     "GEOSITE,google,日常代理",
     "GEOSITE,youtube,日常代理",
