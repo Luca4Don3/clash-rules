@@ -58,4 +58,4 @@ python3 tools/test-integration.py
 
 ## 数据来源
 
-数据来自 MetaCubeX/meta-rules-dat、v2fly/domain-list-community、privacy-protection-tools/anti-AD、AdGuardTeam/AdGuardSDNSFilter、Cats-Team/AdRules 与 abuse.ch/URLhaus。URLhaus 的 plain-text 是逐 URL IOC；当前生成器按精确主机输出 `DOMAIN`，不会把恶意子域提升成父域后扩大到整个站点，并保留带 `no-resolve` 的公网 IP 规则。若要进一步降低 IP 误杀，应改用其需要认证的 hostfile/RPZ 数据集。
+数据来自 MetaCubeX/meta-rules-dat、v2fly/domain-list-community、privacy-protection-tools/anti-AD、AdGuardTeam/AdGuardSDNSFilter、Cats-Team/AdRules 与 abuse.ch/URLhaus。广告源按 2-of-3 交集生成，ABP `$important` 规则计入投票，`@@||host^` 例外会从投票中扣除；URLhaus 的 plain-text 是逐 URL IOC，当前生成器按精确主机输出 `DOMAIN`，不会把恶意子域提升成父域后扩大到整个站点，并保留带 `no-resolve` 的公网 IP 规则。若要进一步降低 IP 误杀，应改用其需要认证的 hostfile/RPZ 数据集。

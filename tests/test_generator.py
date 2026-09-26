@@ -73,6 +73,21 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(domains, {"mediafire.com", "download1532.mediafire.com"})
         self.assertEqual(networks, set())
 
+    def test_adblock_parser_handles_important_rules_and_exceptions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "filter.txt"
+            source.write_text(
+                "||bare.example^\n"
+                "||important.example^$important,domain=foo.example\n"
+                "||script.example^$script\n"
+                "||third-party.example^$third-party\n"
+                "@@||allowed.example^\n"
+                "@@|legacy-allowed.example^|\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(GEN.parse_adblock(source), {"bare.example", "important.example"})
+            self.assertEqual(GEN.parse_adblock_exceptions(source), {"allowed.example", "legacy-allowed.example"})
+
     def test_dedupe_checks_every_ancestor(self):
         self.assertEqual(GEN.dedupe_by_ancestor({"a.b.example.com", "example.com"}), {"example.com"})
 
