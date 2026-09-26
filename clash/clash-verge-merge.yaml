@@ -71,6 +71,7 @@ rules:
   - GEOSITE,cn,DIRECT
   - RULE-SET,direct-preferred,DIRECT
   - RULE-SET,proxy,PROXY
+  - GEOSITE,geolocation-!cn,PROXY
   - GEOSITE,gfw,PROXY
   - GEOSITE,google,PROXY
   - GEOSITE,youtube,PROXY

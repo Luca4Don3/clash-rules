@@ -1,4 +1,4 @@
-# 自动生成；跳过无法可靠转换的域名正则 1 条
+# 自动生成；源分类 openai,anthropic；跳过无法可靠转换的域名正则 1 条
 DOMAIN,browser-intake-datadoghq.com
 DOMAIN,o33249.ingest.sentry.io
 DOMAIN,openai.qualtrics.com

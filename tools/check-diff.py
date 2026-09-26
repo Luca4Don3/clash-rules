@@ -178,7 +178,11 @@ def diff_guard():
         legacy_malware_migration = (relative == "rules/malware.list"
                                      and old.splitlines()
                                      and old.splitlines()[0].startswith("# 恶意/诈骗/钓鱼域名"))
-        migration = legacy_client_migration or legacy_malware_migration
+        # geolocation-!cn 末端兜底会一次性扩大 Shadowrocket proxy 列表；新文件头会记录源分类，
+        # 提交后该条件自动失效，后续异常膨胀仍会触发门禁。
+        legacy_geolocation_migration = (relative == "shadowrocket/geosite/proxy.list"
+                                       and "源分类 geolocation-!cn" not in old)
+        migration = legacy_client_migration or legacy_malware_migration or legacy_geolocation_migration
         if old_count and not migration:
             if new_count == 0:
                 issues.append(f"{relative}: became empty")

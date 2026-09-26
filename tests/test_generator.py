@@ -62,6 +62,17 @@ class GeneratorTests(unittest.TestCase):
         self.assertNotIn("IP-CIDR,127.0.0.1/32,no-resolve", networks)
         self.assertNotIn("IP-CIDR,100.83.3.144/32,no-resolve", networks)
 
+    def test_urlhaus_keeps_exact_hosts_without_parent_promotion(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "urlhaus.txt"
+            source.write_text(
+                "http://mediafire.com/a\nhttp://download1532.mediafire.com/b\n",
+                encoding="utf-8",
+            )
+            domains, networks = GEN.parse_urlhaus_hosts(source)
+        self.assertEqual(domains, {"mediafire.com", "download1532.mediafire.com"})
+        self.assertEqual(networks, set())
+
     def test_dedupe_checks_every_ancestor(self):
         self.assertEqual(GEN.dedupe_by_ancestor({"a.b.example.com", "example.com"}), {"example.com"})
 
@@ -78,7 +89,19 @@ class GeneratorTests(unittest.TestCase):
         for domain in ("dashscope-intl.aliyuncs.com", "alibabacloud.com", "z.ai", "minimax.io",
                        "moonshot.ai", "tencentcloud.com", "bigo.tv"):
             self.assertEqual(policies[f"DOMAIN-SUFFIX,{domain}"], "SENSITIVE")
-        self.assertEqual(policies["DOMAIN-SUFFIX,volcengine.com"], "DIRECT")
+        force_direct = ("volcengine.com", "volcengine.net", "volcengineapi.com", "volcengine-api.com",
+                        "volces.com", "volceapi.com", "volccdn.com", "volcdns.com", "volcvideo.com",
+                        "volcimagex.com", "byteimg.com", "ibytedtos.com")
+        for domain in force_direct:
+            self.assertEqual(policies[f"DOMAIN-SUFFIX,{domain}"], "DIRECT")
+        for body, policy in {
+            "DOMAIN-SUFFIX,auth0.com": "SENSITIVE",
+            "DOMAIN-KEYWORD,chatgpt-async-webps-prod-": "SENSITIVE",
+            "DOMAIN-SUFFIX,prod.hosts.ooklaserver.net": "REJECT",
+            "DOMAIN-KEYWORD,apiproxy-device-prod-nlb-": "PROXY",
+            "DOMAIN-KEYWORD,dualstack.ichnaea-web-": "PROXY",
+        }.items():
+            self.assertEqual(policies[body], policy)
         groups = {body: group for group, _, body in rules}
         self.assertEqual(groups["IP-CIDR6,ff00::/8,no-resolve"], "PRIVATE")
         sensitive = next(i for i, (_, policy, _) in enumerate(rules) if policy == "SENSITIVE")
@@ -144,10 +167,14 @@ class GeneratorTests(unittest.TestCase):
             self.assertLess(shadow.index("DOMAIN-SUFFIX,volces.com,DIRECT"), shadow.index("/rules/reject.list"))
             self.assertIn("/shadowrocket/geosite/sensitive.list,敏感服务", shadow)
         script = (ROOT / "clash/clash-verge-script.js").read_text(encoding="utf-8")
-        for category in ("google", "youtube", "telegram", "facebook", "twitter", "instagram",
+        for category in ("geolocation-!cn", "google", "youtube", "telegram", "facebook", "twitter", "instagram",
                          "whatsapp", "discord", "reddit", "netflix", "spotify", "twitch"):
             self.assertIn(f'"GEOSITE,{category},日常代理"', script)
         self.assertIn('"IP-CIDR6,ff00::/8,DIRECT,no-resolve"', script)
+        for domain in ("volcengine.com", "volcengine.net", "volcengineapi.com", "volcengine-api.com",
+                       "volces.com", "volceapi.com", "volccdn.com", "volcdns.com", "volcvideo.com",
+                       "volcimagex.com", "byteimg.com", "ibytedtos.com"):
+            self.assertIn(f'"DOMAIN-SUFFIX,{domain},DIRECT"', script)
 
 
 if __name__ == "__main__":

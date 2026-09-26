@@ -6,6 +6,8 @@
 GEOSITE,category-ads-all,REJECT
 DOMAIN,hm.baidu.com,REJECT
 DOMAIN,cpro.baidu.com,REJECT
+# Ookla 动态广告正则的安全父域兜底
+DOMAIN-SUFFIX,prod.hosts.ooklaserver.net,REJECT
 
 # 私网
 IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
@@ -92,6 +94,8 @@ DOMAIN-SUFFIX,oaistatic.com,SENSITIVE
 DOMAIN-SUFFIX,oaiusercontent.com,SENSITIVE
 DOMAIN-SUFFIX,sora.com,SENSITIVE
 DOMAIN-SUFFIX,auth0.com,SENSITIVE
+# OpenAI 动态 WebPubSub 正则兜底；不使用过宽的 webpubsub.azure.com
+DOMAIN-KEYWORD,chatgpt-async-webps-prod-,SENSITIVE
 DOMAIN-SUFFIX,perplexity.ai,SENSITIVE
 DOMAIN-SUFFIX,huggingface.co,SENSITIVE
 DOMAIN-SUFFIX,openrouter.ai,SENSITIVE
@@ -126,6 +130,8 @@ DOMAIN-SUFFIX,unsplash.com,DIRECT-PREFERRED
 DOMAIN-SUFFIX,pixabay.com,DIRECT-PREFERRED
 
 # 普通海外代理
+# 非中国地理位置兜底：位于 CN 与 FINAL/MATCH 之前
+GEOSITE,geolocation-!cn,PROXY
 GEOSITE,gfw,PROXY
 GEOSITE,google,PROXY
 GEOSITE,youtube,PROXY
@@ -141,3 +147,8 @@ GEOSITE,spotify,PROXY
 GEOSITE,twitch,PROXY
 GEOSITE,category-porn,PROXY
 DOMAIN-SUFFIX,wikipedia.org,PROXY
+# Netflix 动态 geosite 正则的保守兜底
+DOMAIN-KEYWORD,apiproxy-device-prod-nlb-,PROXY
+DOMAIN-KEYWORD,apiproxy-website-nlb-prod-,PROXY
+DOMAIN-KEYWORD,dualstack.apiproxy-,PROXY
+DOMAIN-KEYWORD,dualstack.ichnaea-web-,PROXY
