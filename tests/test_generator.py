@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import ipaddress
+import re
 import shutil
 import tempfile
 import unittest
@@ -90,6 +91,31 @@ class GeneratorTests(unittest.TestCase):
 
     def test_dedupe_checks_every_ancestor(self):
         self.assertEqual(GEN.dedupe_by_ancestor({"a.b.example.com", "example.com"}), {"example.com"})
+
+    def test_force_direct_domains_must_stay_declared_in_policy_source(self):
+        rules = GEN.parse_policy_source(ROOT / "rules/policy.list")
+        GEN.verify_force_direct(rules)
+        broken = [(group, policy, body) for group, policy, body in rules
+                  if body != "DOMAIN-SUFFIX,volces.com"]
+        with self.assertRaisesRegex(RuntimeError, "volces.com"):
+            GEN.verify_force_direct(broken)
+        # Clash 脚本必须内联同一份例外集合，否则客户端之间会分叉。
+        script = (ROOT / "clash/clash-verge-script.js").read_text(encoding="utf-8")
+        inlined = set(re.findall(r'"DOMAIN-SUFFIX,([^"]+),DIRECT"', script))
+        self.assertEqual(inlined - set(GEN.FORCE_DIRECT_DOMAINS), set())
+
+    def test_geosite_regex_expansion_is_bounded_and_verified(self):
+        self.assertEqual(
+            GEN.geosite_rules(GEN.TYPE_REGEX, r"(^|\.)18jmttios[0-9]{2}\.com$"),
+            [f"DOMAIN-SUFFIX,18jmttios{index:02d}.com" for index in range(100)],
+        )
+        self.assertEqual(GEN.geosite_rules(GEN.TYPE_REGEX, r"^chatgpt-\S+\.webpubsub\.azure\.com$"), [])
+        self.assertEqual(GEN.geosite_rules(GEN.TYPE_REGEX, r"(^|\.)apiproxy-.+\.amazonaws\.com$"), [])
+        # 展开结果必须仍是原正则真正匹配的域名，不得凭空放宽；单标签与超长展开被拒绝。
+        self.assertEqual(GEN.geosite_rules(GEN.TYPE_REGEX, r"^nope\.invalid$"), ["DOMAIN-SUFFIX,nope.invalid"])
+        self.assertEqual(GEN.geosite_rules(GEN.TYPE_REGEX, r"^single$"), [])
+        self.assertEqual(GEN.geosite_rules(GEN.TYPE_REGEX, r"(^|\.)x{20,}\.com$"), [])
+        self.assertEqual(GEN.geosite_rules(GEN.TYPE_DOMAIN, "example.com"), ["DOMAIN-SUFFIX,example.com"])
 
     def test_protobuf_unknown_fields_and_bounds(self):
         domain = b"\x08\x00\x12\x03foo" + b"\x1d\x00\x00\x00\x00"
