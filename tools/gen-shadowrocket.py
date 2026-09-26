@@ -9,6 +9,10 @@ import os
 import re
 import subprocess
 import sys
+try:
+    import sre_parse
+except ImportError:  # Python 3.11+
+    from re import _parser as sre_parse
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -175,8 +179,101 @@ def geosite_rule(typ, value):
         return f"DOMAIN-SUFFIX,{value}"
     if typ == TYPE_FULL:
         return f"DOMAIN,{value}"
-    # Shadowrocket 的 URL-REGEX 匹配 URL，不等价于 geosite 域名正则。
+    # TYPE_REGEX 无法直接表达，交由 geosite_rules 受限展开或跳过。
     return None
+
+
+def _regex_class_values(items):
+    values = set()
+    for op, arg in items:
+        name = str(op)
+        if name == "RANGE":
+            values.update(chr(code) for code in range(arg[0], arg[1] + 1))
+        elif name == "LITERAL":
+            values.add(chr(arg))
+        else:
+            return None
+    return values
+
+
+def _expand_regex_sequence(sequence, limit):
+    results = {""}
+    for op, arg in sequence:
+        name = str(op)
+        if name == "LITERAL":
+            next_values = {prefix + chr(arg) for prefix in results}
+        elif name == "IN":
+            values = _regex_class_values(arg)
+            if values is None:
+                return set()
+            next_values = {prefix + value for prefix in results for value in values}
+        elif name in ("MAX_REPEAT", "MIN_REPEAT"):
+            minimum, maximum, child = arg
+            if not isinstance(maximum, int) or maximum > 64:
+                return set()
+            child_values = _expand_regex_sequence(child, limit)
+            if not child_values:
+                return set()
+            by_count = {0: {""}}
+            current = {""}
+            for count in range(1, maximum + 1):
+                current = {left + right for left in current for right in child_values}
+                if len(current) > limit:
+                    return set()
+                by_count[count] = current
+            suffixes = set().union(*(by_count[count] for count in range(minimum, maximum + 1)))
+            next_values = {prefix + suffix for prefix in results for suffix in suffixes}
+        elif name == "SUBPATTERN":
+            branch_values = _expand_regex_sequence(arg[-1], limit)
+            if not branch_values:
+                return set()
+            next_values = {prefix + suffix for prefix in results for suffix in branch_values}
+        elif name == "BRANCH":
+            branch_values = set()
+            for branch in arg[1]:
+                branch_values.update(_expand_regex_sequence(branch, limit))
+            if not branch_values:
+                return set()
+            next_values = {prefix + suffix for prefix in results for suffix in branch_values}
+        else:
+            return set()
+        results = next_values
+        if len(results) > limit:
+            return set()
+    return results
+
+
+def safe_expand_geosite_regex(pattern, limit=512):
+    original = pattern.split("@", 1)[0].strip()
+    body = original.removeprefix("^").removesuffix("$")
+    body = body.removeprefix(r"(^|\.)")
+    if not body or any(token in body for token in ("\\d", "\\w", "\\s", "\\S", "\\W", "\\D")):
+        return set()
+    try:
+        parsed = sre_parse.parse(body)
+    except re.error:
+        return set()
+    candidates = _expand_regex_sequence(parsed, limit)
+    result = set()
+    domain_pattern = re.compile(r"(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z-]{2,63}")
+    for candidate in candidates:
+        labels = candidate.split(".")
+        if len(labels) < 2 or any(not label or label[0] == "-" or label[-1] == "-" for label in labels):
+            continue
+        if domain_pattern.fullmatch(candidate) and re.search(original, candidate):
+            result.add(candidate)
+    return result
+
+
+def geosite_rules(typ, value):
+    """把一条 geosite 记录展开成等价域名规则；无法安全表达的返回空列表。"""
+    rule = geosite_rule(typ, value)
+    if rule:
+        return [rule]
+    if typ == TYPE_REGEX:
+        # 正则含 ^\. 前缀时同样匹配任意深度的子域，因此展开结果用 DOMAIN-SUFFIX。
+        return [f"DOMAIN-SUFFIX,{domain}" for domain in sorted(safe_expand_geosite_regex(value))]
+    return []
 
 
 def ancestors(domain):
@@ -306,6 +403,15 @@ def parse_policy_source(path):
     return rules
 
 
+def verify_force_direct(rules):
+    """火山引擎强制直连例外必须同时声明在政策源中，避免两处声明分叉。"""
+    declared = {body.split(",", 1)[1] for _, policy, body in rules
+                if policy == "DIRECT" and body.startswith("DOMAIN-SUFFIX,")}
+    missing = sorted(FORCE_DIRECT_DOMAINS - declared)
+    if missing:
+        raise RuntimeError(f"force-direct domains missing from policy source: {missing}")
+
+
 def attach_policy(rule, policy):
     if rule.endswith(",no-resolve"):
         return f"{rule[:-11]},{policy},no-resolve"
@@ -429,9 +535,9 @@ def generate_upstream(root, dat_dir, rules):
         for category in wanted:
             # load_geosite normalizes category codes to upper case; policy source remains lower case.
             for typ, value in cats.get(category.upper(), []):
-                rule = geosite_rule(typ, value)
-                if rule:
-                    result.add(rule)
+                produced = geosite_rules(typ, value)
+                if produced:
+                    result.update(produced)
                 elif typ == TYPE_REGEX:
                     skipped_patterns.add(value)
         all_skipped.update(skipped_patterns)
@@ -482,6 +588,7 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
     rules = parse_policy_source(root / "rules" / "policy.list")
+    verify_force_direct(rules)
     if args.clients_only:
         write_client_outputs(root, rules)
         print("client outputs generated")
