@@ -1,5 +1,6 @@
 # 通用代理规则 provider
 payload:
+  - "GEOSITE,geolocation-!cn"
   - "GEOSITE,gfw"
   - "GEOSITE,google"
   - "GEOSITE,youtube"
@@ -15,3 +16,7 @@ payload:
   - "GEOSITE,twitch"
   - "GEOSITE,category-porn"
   - "DOMAIN-SUFFIX,wikipedia.org"
+  - "DOMAIN-KEYWORD,apiproxy-device-prod-nlb-"
+  - "DOMAIN-KEYWORD,apiproxy-website-nlb-prod-"
+  - "DOMAIN-KEYWORD,dualstack.apiproxy-"
+  - "DOMAIN-KEYWORD,dualstack.ichnaea-web-"

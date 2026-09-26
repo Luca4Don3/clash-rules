@@ -228,7 +228,8 @@ def parse_urlhaus_hosts(path):
             continue
         if not (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified) and not is_private_ip(ip):
             networks.add(f"{'IP-CIDR' if ip.version == 4 else 'IP-CIDR6'},{ip}/{ip.max_prefixlen},no-resolve")
-    return dedupe_by_ancestor(domains), networks
+    # URLhaus 是逐 URL IOC：保留精确主机，不能提升到父域（如 mediafire.com）。
+    return domains, networks
 
 
 def parse_adblock(path):
@@ -354,12 +355,12 @@ def write_client_outputs(root, rules):
         f"RULE-SET,{RAW}/rules/proxy.list,日常代理",
         f"RULE-SET,{RAW}/shadowrocket/geosite/proxy.list,日常代理",
     ]
-    regex_skipped = sum(body.startswith("DOMAIN-REGEX,") for _, _, body in rules)
     sr.extend([
-        f"RULE-SET,{RAW}/shadowrocket/geosite/ipcn.list,DIRECT", "GEOIP,CN,DIRECT", "FINAL,DIRECT",
+        "# 固定源快照；下面的客户端 GeoIP 作为回退",
+        f"RULE-SET,{RAW}/shadowrocket/geosite/ipcn.list,DIRECT",
+        "GEOIP,CN,DIRECT", "FINAL,DIRECT",
     ])
     atomic_write(root / "shadowrocket" / "shadowrocket.conf", "\n".join(sr))
-    return regex_skipped
 
 
 def download_sources(dat_dir):
@@ -393,10 +394,11 @@ def generate_upstream(root, dat_dir, rules):
     missing = [output for output in required_outputs if not categories[output]]
     if missing:
         raise RuntimeError(f"policy source has no GEOSITE categories for: {', '.join(sorted(missing))}")
+    all_skipped = set()
     for output, wanted in categories.items():
         if not wanted:
             continue
-        result, skipped = set(), 0
+        result, skipped_patterns = set(), set()
         for category in wanted:
             # load_geosite normalizes category codes to upper case; policy source remains lower case.
             for typ, value in cats.get(category.upper(), []):
@@ -404,10 +406,13 @@ def generate_upstream(root, dat_dir, rules):
                 if rule:
                     result.add(rule)
                 elif typ == TYPE_REGEX:
-                    skipped += 1
+                    skipped_patterns.add(value)
+        all_skipped.update(skipped_patterns)
+        source_categories = ",".join(wanted)
         atomic_write(root / "shadowrocket" / "geosite" / f"{output}.list",
-                     f"# 自动生成；跳过无法可靠转换的域名正则 {skipped} 条\n" + "\n".join(sorted(result)))
-        print(f"{output}.list: {len(result)} rules, skipped regex: {skipped}")
+                     f"# 自动生成；源分类 {source_categories}；跳过无法可靠转换的域名正则 {len(skipped_patterns)} 条\n"
+                     + "\n".join(sorted(result)))
+        print(f"{output}.list: {len(result)} rules, skipped regex: {len(skipped_patterns)}")
     ip_rules = set()
     for packed, prefix in load_geoip_cn(dat_dir / "geoip.dat"):
         try:
@@ -425,8 +430,9 @@ def generate_upstream(root, dat_dir, rules):
         if conflict:
             raise RuntimeError(f"{label}: protected domain conflict: {conflict[:5]}")
     atomic_write(root / "rules" / "ads-extra.list", "# 自动生成\n" + "\n".join(f"DOMAIN-SUFFIX,{d}" for d in sorted(ads)))
-    malware = [f"DOMAIN-SUFFIX,{d}" for d in sorted(dedupe_by_ancestor(malware_domains))] + sorted(malware_ips)
+    malware = [f"DOMAIN,{d}" for d in sorted(malware_domains)] + sorted(malware_ips)
     atomic_write(root / "rules" / "malware.list", "# 自动生成\n" + "\n".join(malware))
+    return len(all_skipped)
 
 
 def source_snapshot_id(sources):
@@ -443,8 +449,8 @@ def main():
     root = Path(__file__).resolve().parent.parent
     rules = parse_policy_source(root / "rules" / "policy.list")
     if args.clients_only:
-        skipped = write_client_outputs(root, rules)
-        print(f"client outputs generated; skipped regex: {skipped}")
+        write_client_outputs(root, rules)
+        print("client outputs generated")
         return
     dat_dir = Path(args.dat_dir).resolve()
     if args.offline:
@@ -458,9 +464,9 @@ def main():
     else:
         manifest = download_sources(dat_dir)
     manifest["snapshot_sha256"] = source_snapshot_id(manifest["sources"])
-    generate_upstream(root, dat_dir, rules)
-    skipped = write_client_outputs(root, rules)
-    print(f"client outputs generated; skipped regex: {skipped}")
+    skipped = generate_upstream(root, dat_dir, rules)
+    write_client_outputs(root, rules)
+    print(f"client outputs generated; skipped geosite regex: {skipped}")
     atomic_write(root / "rules" / "sources.json", json.dumps(manifest, ensure_ascii=False, indent=2))
 
 

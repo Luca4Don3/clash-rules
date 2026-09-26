@@ -1,2 +1,6 @@
 # 自动生成；不含策略目标
 DOMAIN-SUFFIX,wikipedia.org
+DOMAIN-KEYWORD,apiproxy-device-prod-nlb-
+DOMAIN-KEYWORD,apiproxy-website-nlb-prod-
+DOMAIN-KEYWORD,dualstack.apiproxy-
+DOMAIN-KEYWORD,dualstack.ichnaea-web-
