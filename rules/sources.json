@@ -5,7 +5,7 @@
       "name": "geosite.dat",
       "url": "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
       "version": "latest",
-      "sha256": "1fcaf9622d0fd5fb1dc0d1f9b81ff15abe1b284622ff6510a2809f5585721c7a"
+      "sha256": "c7d7f1a5d15344b2fb97fb9f08f999c16d19e0b63b5b3a9a13b97a97e52b9dbd"
     },
     {
       "name": "geoip.dat",
@@ -23,20 +23,20 @@
       "name": "adguard-filter.txt",
       "url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
       "version": "latest",
-      "sha256": "44189eb08a032c5751e321ded1f7e5dc0a475908421dedf7c20f057252f915c3"
+      "sha256": "278c03c8d62fabda65f3ab0059186af7829cfd33a87b94392f439866abea9b7c"
     },
     {
       "name": "adrules.txt",
       "url": "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt",
       "version": "latest",
-      "sha256": "eb2a5a665c3f887d9b3a83e3767635bdfd013513bc8307f5ca751f311a2fd1ca"
+      "sha256": "3a16bce7fa97a5fe142554191cbb8e2fe5635e04d2f294de980161355417fae6"
     },
     {
       "name": "urlhaus.txt",
       "url": "https://urlhaus.abuse.ch/downloads/text/",
       "version": "latest",
-      "sha256": "de05ea70e0632613cd8a59bf7d1c8623b5234dd0aa9ec115a08b7935b208251e"
+      "sha256": "c21e8d466acdd79889876a492931d2c3fd616541b28452709b26a36c0cd798dc"
     }
   ],
-  "snapshot_sha256": "797e9f045ee3a4b3a226cf304653a24c0bdaddc595ceca0284150a99608484cb"
+  "snapshot_sha256": "c27efbafc0a7df7b6f7b04ef228a16ead7fb1bff898d698368e50d010752030a"
 }
