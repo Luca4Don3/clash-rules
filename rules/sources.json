@@ -5,7 +5,7 @@
       "name": "geosite.dat",
       "url": "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
       "version": "latest",
-      "sha256": "c7d7f1a5d15344b2fb97fb9f08f999c16d19e0b63b5b3a9a13b97a97e52b9dbd"
+      "sha256": "79e7a395c57da61aeb3f68db01121c1a0730ab2bd1c8bbe4c0c327786e225134"
     },
     {
       "name": "geoip.dat",
@@ -17,26 +17,26 @@
       "name": "anti-ad-domains.txt",
       "url": "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt",
       "version": "latest",
-      "sha256": "2eac79147230d9a6fc654bebcb90965afedc5db67a735f4c996cbaad9633ce40"
+      "sha256": "b30ba064216b977d585f8321ab86aadc1781796f50f788e606e0a2c85ded4582"
     },
     {
       "name": "adguard-filter.txt",
       "url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
       "version": "latest",
-      "sha256": "278c03c8d62fabda65f3ab0059186af7829cfd33a87b94392f439866abea9b7c"
+      "sha256": "d95c61f09fe1f58c244e35b2f5310234afbd8f6c2c032a0dfd5799ac20992ff2"
     },
     {
       "name": "adrules.txt",
       "url": "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt",
       "version": "latest",
-      "sha256": "3a16bce7fa97a5fe142554191cbb8e2fe5635e04d2f294de980161355417fae6"
+      "sha256": "d2c615b3470f30c0b6329042658b59df1ef3a153a8d00531cc08edd77a71936e"
     },
     {
       "name": "urlhaus.txt",
       "url": "https://urlhaus.abuse.ch/downloads/text/",
       "version": "latest",
-      "sha256": "c21e8d466acdd79889876a492931d2c3fd616541b28452709b26a36c0cd798dc"
+      "sha256": "3dd67f06293c53f09d80ff91ad7a2e92d959a3715eccad3dfffdc5e812813294"
     }
   ],
-  "snapshot_sha256": "c27efbafc0a7df7b6f7b04ef228a16ead7fb1bff898d698368e50d010752030a"
+  "snapshot_sha256": "8caf5e2bbb8ba9bc892aa48b295ba8ff2bac35e718d7d126a4074345e60e1b63"
 }
