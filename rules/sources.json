@@ -5,38 +5,38 @@
       "name": "geosite.dat",
       "url": "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
       "version": "latest",
-      "sha256": "fbb80643f8172bd4ea6231a6f6636a5931063aec00d150d8c166266ec706e168"
+      "sha256": "b697cf0728afa1757297d528a83b5c2270ec06652cee5b788353bc246d6b2cd3"
     },
     {
       "name": "geoip.dat",
       "url": "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
       "version": "latest",
-      "sha256": "391b522361c52804e486a98b53d97f3d9c1d3e4e4217bb34954774a0b456b9fd"
+      "sha256": "116cc0f03d48991962f7f9cdbbcf53d45d89777f9c3cd1a663210853e5df6093"
     },
     {
       "name": "anti-ad-domains.txt",
       "url": "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt",
       "version": "latest",
-      "sha256": "b30ba064216b977d585f8321ab86aadc1781796f50f788e606e0a2c85ded4582"
+      "sha256": "348ebf99c28ad505bdae56314592bdb2590ef1dec714061daa54d96e6ab9c25e"
     },
     {
       "name": "adguard-filter.txt",
       "url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
       "version": "latest",
-      "sha256": "8add6b7e9fabb97dc81347a72eceec9a504828ae245bb67a84db54d60092e91c"
+      "sha256": "4f04d10e4098a4d745db59f3b618c681fbbb468ba1c483e4e44d858f2fc87451"
     },
     {
       "name": "adrules.txt",
       "url": "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock.txt",
       "version": "latest",
-      "sha256": "c7d8286ae81c3453d0d641922d1a70154037f0e923a21d1b4c28df526436b1cf"
+      "sha256": "82f17a485754bd0c2f5bcc3cec1f2dde10c619a25ed76b2440a2ef7793f1f5bb"
     },
     {
       "name": "urlhaus.txt",
       "url": "https://urlhaus.abuse.ch/downloads/text/",
       "version": "latest",
-      "sha256": "f8d6d6aa40ec3a24f94dad12081fcc0ce1265782ada6f34f5e4fe14d0759e16b"
+      "sha256": "0cdc54e07998731ab54f4fbaf5d685b5b26e33f8dfdffaa5bf74c8200f4c733d"
     }
   ],
-  "snapshot_sha256": "40353ba764e5eddc3e6a862ce244acd6fb4356100d3f12fcb0f9202a4708eabc"
+  "snapshot_sha256": "3a1e9aa0b093134cf1e47246f59bd2ee1c26cac5d985d28cdf3a40bdfa81853f"
 }
