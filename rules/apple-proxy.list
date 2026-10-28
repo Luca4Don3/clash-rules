@@ -1,0 +1,25 @@
+# 自动生成；不含策略目标
+DOMAIN-SUFFIX,tv.apple.com
+DOMAIN,tv.applemusic.com
+DOMAIN,hls-svod.itunes.apple.com
+DOMAIN,np-edge.itunes.apple.com
+DOMAIN,play-edge.itunes.apple.com
+DOMAIN,uts-api.itunes.apple.com
+DOMAIN-SUFFIX,hls-amt.itunes.apple.com
+DOMAIN-SUFFIX,hls.itunes.apple.com
+DOMAIN-SUFFIX,apple.news
+DOMAIN,news.apple.com
+DOMAIN,news-assets.apple.com
+DOMAIN,news-client.apple.com
+DOMAIN,news-edge.apple.com
+DOMAIN,news-events.apple.com
+DOMAIN,testflight.apple.com
+DOMAIN,gspe1-ssl.ls.apple.com
+DOMAIN,mask.icloud.com
+DOMAIN,mask-api.icloud.com
+DOMAIN,mask-h2.icloud.com
+DOMAIN,cvws.icloud-content.com
+DOMAIN,apple-relay.apple.com
+DOMAIN,apple-relay.cloudflare.com
+DOMAIN,apple-relay.fastly-edge.com
+DOMAIN,cp4.cloudflare.com

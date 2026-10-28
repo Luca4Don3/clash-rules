@@ -1,5 +1,5 @@
 # 统一政策源。格式：<规则>,<目标>
-# 目标仅允许：REJECT、DIRECT、SENSITIVE、DIRECT-PREFERRED、PROXY。
+# 目标仅允许：REJECT、DIRECT、SENSITIVE、APPLE-PROXY、APPLE-CN、DIRECT-PREFERRED、PROXY。
 # 生成器按固定优先级输出，文件中的段落顺序不代表最终客户端顺序。
 
 # 广告与恶意软件
@@ -22,6 +22,81 @@ IP-CIDR6,::1/128,DIRECT,no-resolve
 IP-CIDR6,fc00::/7,DIRECT,no-resolve
 IP-CIDR6,fe80::/10,DIRECT,no-resolve
 IP-CIDR6,ff00::/8,DIRECT,no-resolve
+
+# Apple 境外/需代理端点：先于共用商店、地图、iCloud 的父域直连规则。
+# 不照搬 AppleProxy 全集，其中 apps.apple.com、cdn-apple.com 等并非境外专属。
+DOMAIN-SUFFIX,tv.apple.com,APPLE-PROXY
+DOMAIN,tv.applemusic.com,APPLE-PROXY
+DOMAIN,hls-svod.itunes.apple.com,APPLE-PROXY
+DOMAIN,np-edge.itunes.apple.com,APPLE-PROXY
+DOMAIN,play-edge.itunes.apple.com,APPLE-PROXY
+DOMAIN,uts-api.itunes.apple.com,APPLE-PROXY
+DOMAIN-SUFFIX,hls-amt.itunes.apple.com,APPLE-PROXY
+DOMAIN-SUFFIX,hls.itunes.apple.com,APPLE-PROXY
+DOMAIN-SUFFIX,apple.news,APPLE-PROXY
+DOMAIN,news.apple.com,APPLE-PROXY
+DOMAIN,news-assets.apple.com,APPLE-PROXY
+DOMAIN,news-client.apple.com,APPLE-PROXY
+DOMAIN,news-edge.apple.com,APPLE-PROXY
+DOMAIN,news-events.apple.com,APPLE-PROXY
+DOMAIN,testflight.apple.com,APPLE-PROXY
+DOMAIN,gspe1-ssl.ls.apple.com,APPLE-PROXY
+DOMAIN,mask.icloud.com,APPLE-PROXY
+DOMAIN,mask-api.icloud.com,APPLE-PROXY
+DOMAIN,mask-h2.icloud.com,APPLE-PROXY
+DOMAIN,cvws.icloud-content.com,APPLE-PROXY
+# Apple 智能/PCC 独立端点；代理不等于解除地区、账户或设备资格限制。
+DOMAIN,apple-relay.apple.com,APPLE-PROXY
+DOMAIN,apple-relay.cloudflare.com,APPLE-PROXY
+DOMAIN,apple-relay.fastly-edge.com,APPLE-PROXY
+DOMAIN,cp4.cloudflare.com,APPLE-PROXY
+
+# Apple 大陆及可在大陆直连的共用服务（不是按 Apple ID 商店地区划分）。
+# apps/itunes/mzstatic 共用端点走国内出口，TV 的细分例外必须先匹配。
+# 不使用 apple.com / cdn-apple.com 整体直连，不据 .com 后缀判断服务地区。
+DOMAIN-SUFFIX,apple.com.cn,APPLE-CN
+DOMAIN-SUFFIX,apple.cn,APPLE-CN
+DOMAIN-SUFFIX,icloud.com.cn,APPLE-CN
+DOMAIN-SUFFIX,apzones.com,APPLE-CN
+DOMAIN-SUFFIX,apps.apple.com,APPLE-CN
+DOMAIN-SUFFIX,itunes.apple.com,APPLE-CN
+DOMAIN-SUFFIX,itunes.com,APPLE-CN
+DOMAIN-SUFFIX,mzstatic.com,APPLE-CN
+DOMAIN-SUFFIX,music.apple.com,APPLE-CN
+DOMAIN,amp-api.music.apple.com,APPLE-CN
+DOMAIN,amp-api.media.apple.com,APPLE-CN
+DOMAIN-SUFFIX,weather-data.apple.com,APPLE-CN
+DOMAIN-SUFFIX,weather-map.apple.com,APPLE-CN
+DOMAIN-SUFFIX,weather-map2.apple.com,APPLE-CN
+DOMAIN-SUFFIX,weatherkit.apple.com,APPLE-CN
+DOMAIN-SUFFIX,push.apple.com,APPLE-CN
+DOMAIN-SUFFIX,ls.apple.com,APPLE-CN
+DOMAIN,gs-loc-cn.apple.com,APPLE-CN
+DOMAIN,gs-loc.apple.com,APPLE-CN
+DOMAIN,account.apple.com,APPLE-CN
+DOMAIN,appleid.apple.com,APPLE-CN
+DOMAIN,idmsa.apple.com,APPLE-CN
+DOMAIN,gsa.apple.com,APPLE-CN
+DOMAIN,appleid.cdn-apple.com,APPLE-CN
+DOMAIN,setup.icloud.com,APPLE-CN
+DOMAIN,captive.apple.com,APPLE-CN
+DOMAIN,ocsp.apple.com,APPLE-CN
+DOMAIN,ocsp2.apple.com,APPLE-CN
+DOMAIN,valid.apple.com,APPLE-CN
+DOMAIN,certs.apple.com,APPLE-CN
+DOMAIN,crl.apple.com,APPLE-CN
+DOMAIN,mesu.apple.com,APPLE-CN
+DOMAIN,gdmf.apple.com,APPLE-CN
+DOMAIN,appldnld.apple.com,APPLE-CN
+DOMAIN,configuration.apple.com,APPLE-CN
+DOMAIN,gg.apple.com,APPLE-CN
+DOMAIN,gs.apple.com,APPLE-CN
+DOMAIN,swdist.apple.com,APPLE-CN
+DOMAIN,swcdn.apple.com,APPLE-CN
+DOMAIN,swdownload.apple.com,APPLE-CN
+DOMAIN,swscan.apple.com,APPLE-CN
+DOMAIN,updates.cdn-apple.com,APPLE-CN
+DOMAIN,updates-http.cdn-apple.com,APPLE-CN
 
 # 国内定制
 DOMAIN-SUFFIX,deepseek.com,DIRECT

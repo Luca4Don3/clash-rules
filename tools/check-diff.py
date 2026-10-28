@@ -16,6 +16,7 @@ GENERATED = [
     "shadowrocket/geosite/cn.list", "shadowrocket/geosite/sensitive.list", "shadowrocket/geosite/proxy.list",
     "shadowrocket/geosite/ipcn.list", "rules/ads-extra.list", "rules/malware.list",
     "rules/reject.list", "rules/direct.list", "rules/sensitive.list",
+    "rules/apple-proxy.list", "rules/apple-cn.list",
     "rules/direct-preferred.list", "rules/proxy.list", "rules/sources.json",
 ]
 VALID_TYPES = {"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "IP-CIDR", "IP-CIDR6",
@@ -57,7 +58,7 @@ def validate():
     except (OSError, ValueError, TypeError) as error:
         issues.append(f"rules/sources.json: invalid manifest ({error})")
     provider_domains = {}
-    for name in ("reject", "direct", "sensitive", "direct-preferred", "proxy"):
+    for name in ("reject", "direct", "sensitive", "apple-proxy", "apple-cn", "direct-preferred", "proxy"):
         path = ROOT / "rules" / f"{name}.list"
         entries = rule_lines(path) if path.exists() else []
         if not entries:
@@ -74,7 +75,7 @@ def validate():
                 issues.append(f"{path.relative_to(ROOT)}: invalid type: {entry}")
                 break
     reject_domains = provider_domains.get("reject", set())
-    for name in ("direct", "sensitive", "direct-preferred", "proxy"):
+    for name in ("direct", "sensitive", "apple-proxy", "apple-cn", "direct-preferred", "proxy"):
         overlap = sorted(reject_domains & provider_domains.get(name, set()))
         if overlap:
             issues.append(f"rules/{name}.list overlaps rules/reject.list: {overlap[:10]}")
@@ -128,6 +129,7 @@ def validate():
         if required not in script:
             issues.append(f"clash-verge-script.js: missing {required}")
     target_names = {"REJECT": "广告拦截", "DIRECT": "DIRECT", "SENSITIVE": "敏感服务",
+                    "APPLE-PROXY": "日常代理", "APPLE-CN": "DIRECT",
                     "DIRECT-PREFERRED": "直连优先", "PROXY": "日常代理"}
     policy_path = ROOT / "rules/policy.list"
     for raw in policy_path.read_text(encoding="utf-8").splitlines():
@@ -164,6 +166,24 @@ def validate():
         issues.append("shadowrocket.conf: missing sensitive or CN rule provider")
     elif sensitive_at > cn_at or sensitive_geosite_at > cn_at:
         issues.append("shadowrocket.conf: sensitive rules are shadowed by CN rules")
+    # Apple 窄域代理必须先于商店/iCloud 父域直连，且都在宽泛地理兜底之前。
+    for text, markers, label in (
+        (script, ("RULE-SET,apple-proxy,日常代理", "RULE-SET,apple-cn,DIRECT",
+                  "RULE-SET,direct,DIRECT", "GEOSITE,cn,DIRECT",
+                  "GEOSITE,geolocation-!cn,日常代理"), "Clash script"),
+        (shadow, ("/rules/apple-proxy.list,日常代理", "/rules/apple-cn.list,DIRECT",
+                  "/rules/direct.list,DIRECT", "/shadowrocket/geosite/cn.list,DIRECT",
+                  "/shadowrocket/geosite/proxy.list,日常代理"), "Shadowrocket"),
+    ):
+        positions = [text.find(marker) for marker in markers]
+        if any(position < 0 for position in positions) or positions != sorted(positions):
+            issues.append(f"{label}: missing or misordered Apple overrides")
+    for name in ("apple-cn", "apple-proxy"):
+        entries = rule_lines(ROOT / "rules" / f"{name}.list")
+        if any(entry.split(",", 1)[0] not in {"DOMAIN", "DOMAIN-SUFFIX"} for entry in entries):
+            issues.append(f"rules/{name}.list: Apple overrides must use explicit domain rules")
+        if any(entry in entries for entry in ("DOMAIN-SUFFIX,apple.com", "DOMAIN-SUFFIX,cdn-apple.com")):
+            issues.append(f"rules/{name}.list: blanket Apple routing is forbidden")
     return issues
 
 

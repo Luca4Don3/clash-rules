@@ -21,7 +21,7 @@ https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/clash/clash-verge
 
 ## mihomo rule-provider
 
-[`clash/rule-provider.yaml`](clash/rule-provider.yaml) 是带 `payload:` 的通用海外代理规则 provider。广告、直连、敏感服务和直连优先应分别引用 `rules/reject.list`、`rules/direct.list`、`rules/sensitive.list`、`rules/direct-preferred.list`，并显式设置 `behavior: classical`、`format: text`；不要把不同策略塞进一个 `RULE-SET`。
+[`clash/rule-provider.yaml`](clash/rule-provider.yaml) 是带 `payload:` 的通用海外代理规则 provider。广告、直连、敏感服务和直连优先应分别引用 `rules/reject.list`、`rules/direct.list`、`rules/sensitive.list`、`rules/direct-preferred.list`，并显式设置 `behavior: classical`、`format: text`；不要把不同策略塞进一个 `RULE-SET`。Apple 还需分别引用 `rules/apple-proxy.list`（代理）与 `rules/apple-cn.list`（DIRECT），按此顺序置于普通直连/CN 和海外兜底之前；不能只用通用代理 provider 而漏掉直连例外。
 
 ## Shadowrocket
 
@@ -40,9 +40,26 @@ https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/shadowrocket/shad
 
 Shadowrocket 使用 `doh.pub` 和 `dns.alidns.com` DoH，`223.5.5.5`、`119.29.29.29` 仅作 bootstrap/fallback。`ipcn.list` 是仓库固定快照，后面的客户端 `GEOIP,CN` 是数据库回退，因此两条 CN IP 规则有意保留。`shadowrocket/geosite/*.list` 与其他 geosite 产物一样由政策源生成：普通条目按类型转成 `DOMAIN`/`DOMAIN-SUFFIX`/`DOMAIN-KEYWORD`，有限且安全的域名正则会展开为 `DOMAIN-SUFFIX`（例如 `(^|\.)18jmttios[0-9]{2}\.com$` 展开为 100 条），展开结果会用原正则二次校验并要求是合法多标签域名；含 `\d`/`\w`/`\S` 等不可枚举字符、重复上限过大或展开规模超限的表达式仍会跳过，并在生成日志与文件头报告数量，不会用 `URL-REGEX` 冒充域名规则。OpenAI、Netflix 与 Ookla 的关键动态正则由政策源中的窄 `DOMAIN-KEYWORD`/`DOMAIN-SUFFIX` 兜底；Google 的两条动态正则已由现有静态后缀完整覆盖。Clash 端直接使用原生 `GEOSITE`，不受展开结果影响。
 
+## Apple：中国大陆与境外服务
+
+旧海外地理兜底包含整个 `apple.com`、`itunes.com`，但没有商店/天气直连例外，会将大陆可用的服务也送往境外节点。现在单独维护两份由政策源生成的列表，三种客户端入口同步采用：
+
+| 规则集 | 出口 | 范围 |
+| --- | --- | --- |
+| `rules/apple-proxy.list` | 日常代理（Legacy 为 PROXY） | Apple TV/News、TestFlight、Private Relay、Apple 智能/PCC 等需代理端点，以及 `itunes.apple.com`、地图/iCloud 父域下的窄域例外 |
+| `rules/apple-cn.list` | DIRECT | 大陆 iCloud（`icloud.com.cn`、`apzones.com`）、共用 App Store/Apple Music、天气、推送、地图、登录与更新端点 |
+
+**境外窄域例外必须在前。** 例如 `uts-api.itunes.apple.com`、`hls.itunes.apple.com` 先走代理，再让商店共用的 `itunes.apple.com` 子域直连；不能反过来。广告规则仍在 Apple 规则之前，天气遥测广告拦截不会因此被整体放行。未列入例外的 Apple 域名继续原有策略，没有给整个 `apple.com` 或 `cdn-apple.com` 设一刀切的出口。
+
+`APPLE-CN` 表示“大陆及可大陆直连的共用端点”，**不是按 Apple ID 判断国区**。国区/外区商店可能共用 `apps.apple.com`、`itunes.apple.com`、`mzstatic.com`；单靠域名规则无法按商店地区分开，也不应把 `.com` 等同于境外。需要外区商店特殊出口时，应根据请求日志增加最小例外，不能全局代理商店。代理本身也不保证解除服务的地区、账户或设备限制。
+
+Shadowrocket 保持原有国内 DoH 与 IPv6 设置，节点订阅不变。修复后需**更新配置订阅并更新规则集**（不是只更新机场节点），确保配置中 `apple-proxy.list` 位于 `apple-cn.list` 之前，且二者均在 `geosite/proxy.list` 之前；使用“配置”路由模式，重新连接后关闭再打开 App Store/天气。规则匹配通过不代表手机实网已恢复；仍失败时提供这两个 App 的请求日志/命中策略即可，勿提供机场 token。
+
+依据：[Apple 官方服务主机清单](https://support.apple.com/zh-cn/101555)、[MetaCubeX AppleCN](https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite/apple-cn.yaml)、[blackmatrix7 AppleProxy](https://github.com/blackmatrix7/ios_rule_script/blob/master/rule/Clash/AppleProxy/AppleProxy.list)。仅参考其可确认的细分端点；AppleProxy 上游也包含商店/证书/CDN 共用域名，不能整包优先代理。
+
 ## 规则生成
 
-唯一政策源是 [`rules/policy.list`](rules/policy.list)，目标只允许 `REJECT`、`DIRECT`、`SENSITIVE`、`DIRECT-PREFERRED`、`PROXY`。生成命令：
+唯一政策源是 [`rules/policy.list`](rules/policy.list)，目标只允许 `REJECT`、`DIRECT`、`SENSITIVE`、`APPLE-PROXY`、`APPLE-CN`、`DIRECT-PREFERRED`、`PROXY`；两个 Apple 目标仅接受显式 `DOMAIN`/`DOMAIN-SUFFIX`，分别生成独立的代理/直连规则集。生成命令：
 
 ```bash
 python3 tools/gen-shadowrocket.py
@@ -54,7 +71,7 @@ python3 tools/test-integration.py
 
 下载固定使用失败检测、重试、连接超时和总超时；[`rules/sources.json`](rules/sources.json) 记录上游 URL、版本、每项 SHA-256 和整体 `snapshot_sha256`。离线生成只代表该清单对应的快照，CI 才会按 `latest` 重新抓取；CI 只暂存明确列出的生成产物。
 
-规则顺序固定为：广告/恶意拦截 → 私网 → 敏感服务 → 国内定制 → GEOSITE CN → 直连优先 → 普通海外代理（含 `GEOSITE,geolocation-!cn` 末端兜底）→ GEOIP CN → DIRECT。当前 CN 分类优先于普通海外代理，因此 `.cn` 海外服务若要代理需要显式前置例外，不能直接全局调换顺序；当前未擅自增加 `.cn` 金融例外，以免未经确认改变流量路径。以当前快照计算，`GEOSITE,cn` 会遮蔽 `GEOSITE,geolocation-!cn` 的 217 个域名，其中绝大多数是被收录的中国镜像或国内站（`apple.xn--fiqs8s`、`steam.*.qtlglb.com`、`cnpmjs.org`、灰产盗版站），直连正确。已知仍有两组语义不一致待决策：`kimi.ai` 落直连而 `moonshot.ai`/`minimax.io` 走敏感服务；`alibabacloud.com.hk/tw/sg/au/my/co.in` 与 `alicloud.com` 落直连而 `alibabacloud.com` 走敏感服务。敏感服务整体位于 CN 之前，因此 `alibabacloud.com`、`bigo.tv`、`minimax.io`、`moonshot.ai`、`tencentcloud.com`、`z.ai`、`dashscope-intl.aliyuncs.com` 这 7 个国内可直连的域名仍强制走代理；其中 `dashscope-intl.aliyuncs.com` 被 `DOMAIN-SUFFIX,aliyuncs.com,DIRECT` 遮蔽属于有意例外（阿里云国际 API 走代理，aliyuncs.com 其余子域直连）。私网规则强制使用 `DIRECT`；URLhaus 生成的 IP 规则会排除与这些私网/特殊地址重叠的条目。火山引擎中国站是用户指定的强制直连例外，置于广告规则之前，避免被上游广告条目（如 `mssdk.volces.com`）遮蔽；该例外集合在生成器里以 `FORCE_DIRECT_DOMAINS` 为准，启动时校验它与政策源声明一致（缺项即报错），测试同时校验 `clash-verge-script.js` 内联的直连域名没有超出该集合，避免三处维护产生分叉；国际站 `byteplus.com` 仍使用敏感服务策略。
+规则顺序固定为：广告/恶意拦截 → 私网 → 敏感服务 → Apple 境外细分例外 → Apple 大陆/共用端点 → 国内定制 → GEOSITE CN → 直连优先 → 普通海外代理（含 `GEOSITE,geolocation-!cn` 末端兜底）→ GEOIP CN → DIRECT。当前 CN 分类优先于普通海外代理，因此 `.cn` 海外服务若要代理需要显式前置例外，不能直接全局调换顺序；当前未擅自增加 `.cn` 金融例外，以免未经确认改变流量路径。以当前快照计算，`GEOSITE,cn` 会遮蔽 `GEOSITE,geolocation-!cn` 的 217 个域名，其中绝大多数是被收录的中国镜像或国内站（`apple.xn--fiqs8s`、`steam.*.qtlglb.com`、`cnpmjs.org`、灰产盗版站），直连正确。已知仍有两组语义不一致待决策：`kimi.ai` 落直连而 `moonshot.ai`/`minimax.io` 走敏感服务；`alibabacloud.com.hk/tw/sg/au/my/co.in` 与 `alicloud.com` 落直连而 `alibabacloud.com` 走敏感服务。敏感服务整体位于 CN 之前，因此 `alibabacloud.com`、`bigo.tv`、`minimax.io`、`moonshot.ai`、`tencentcloud.com`、`z.ai`、`dashscope-intl.aliyuncs.com` 这 7 个国内可直连的域名仍强制走代理；其中 `dashscope-intl.aliyuncs.com` 被 `DOMAIN-SUFFIX,aliyuncs.com,DIRECT` 遮蔽属于有意例外（阿里云国际 API 走代理，aliyuncs.com 其余子域直连）。私网规则强制使用 `DIRECT`；URLhaus 生成的 IP 规则会排除与这些私网/特殊地址重叠的条目。火山引擎中国站是用户指定的强制直连例外，置于广告规则之前，避免被上游广告条目（如 `mssdk.volces.com`）遮蔽；该例外集合在生成器里以 `FORCE_DIRECT_DOMAINS` 为准，启动时校验它与政策源声明一致（缺项即报错），测试同时校验 `clash-verge-script.js` 内联的直连域名没有超出该集合，避免三处维护产生分叉；国际站 `byteplus.com` 仍使用敏感服务策略。
 
 ## 数据来源
 

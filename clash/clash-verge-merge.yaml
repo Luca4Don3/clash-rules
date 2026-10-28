@@ -23,6 +23,20 @@ rule-providers:
     url: https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/rules/sensitive.list
     path: ./rules/sensitive.list
     interval: 86400
+  apple-proxy:
+    type: http
+    behavior: classical
+    format: text
+    url: https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/rules/apple-proxy.list
+    path: ./rules/apple-proxy.list
+    interval: 86400
+  apple-cn:
+    type: http
+    behavior: classical
+    format: text
+    url: https://raw.githubusercontent.com/Luca4Don3/clash-rules/master/rules/apple-cn.list
+    path: ./rules/apple-cn.list
+    interval: 86400
   direct-preferred:
     type: http
     behavior: classical
@@ -67,6 +81,8 @@ rules:
   - RULE-SET,sensitive,PROXY
   - GEOSITE,openai,PROXY
   - GEOSITE,anthropic,PROXY
+  - RULE-SET,apple-proxy,PROXY
+  - RULE-SET,apple-cn,DIRECT
   - RULE-SET,direct,DIRECT
   - GEOSITE,cn,DIRECT
   - RULE-SET,direct-preferred,DIRECT

@@ -21,7 +21,7 @@ function upsertGroup(groups, group) {
 
 function main(config) {
   config["rule-providers"] = config["rule-providers"] || {};
-  for (const name of ["reject", "direct", "sensitive", "direct-preferred", "proxy"]) {
+  for (const name of ["reject", "direct", "sensitive", "apple-proxy", "apple-cn", "direct-preferred", "proxy"]) {
     config["rule-providers"][name] = provider(name);
   }
 
@@ -71,6 +71,9 @@ function main(config) {
     "RULE-SET,sensitive,敏感服务",
     "GEOSITE,openai,敏感服务",
     "GEOSITE,anthropic,敏感服务",
+    // TV 等窄域例外先于共用商店父域；Apple 大陆/共用端点先于地理兜底。
+    "RULE-SET,apple-proxy,日常代理",
+    "RULE-SET,apple-cn,DIRECT",
     "RULE-SET,direct,DIRECT",
     "GEOSITE,cn,DIRECT",
     "RULE-SET,direct-preferred,直连优先",

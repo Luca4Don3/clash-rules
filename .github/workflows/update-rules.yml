@@ -54,7 +54,7 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -v
           test -s clash/clash-verge-script.js
-          git add clash/clash-verge-script.js clash/clash-verge-merge.yaml clash/rule-provider.yaml shadowrocket/shadowrocket.conf shadowrocket/geosite/*.list rules/ads-extra.list rules/malware.list rules/reject.list rules/direct.list rules/sensitive.list rules/direct-preferred.list rules/proxy.list rules/sources.json
+          git add clash/clash-verge-script.js clash/clash-verge-merge.yaml clash/rule-provider.yaml shadowrocket/shadowrocket.conf shadowrocket/geosite/*.list rules/ads-extra.list rules/malware.list rules/reject.list rules/direct.list rules/sensitive.list rules/apple-proxy.list rules/apple-cn.list rules/direct-preferred.list rules/proxy.list rules/sources.json
           python3 tools/gen-shadowrocket.py --offline --dat-dir .temp/upstream
           git diff --exit-code
 

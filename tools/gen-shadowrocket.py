@@ -20,9 +20,9 @@ REPO = "Luca4Don3/clash-rules"
 BRANCH = "master"
 RAW = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}"
 DAT_RELEASES = "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest"
-ALLOWED_POLICIES = {"REJECT", "DIRECT", "SENSITIVE", "DIRECT-PREFERRED", "PROXY"}
-POLICY_ORDER = {"REJECT": 0, "PRIVATE": 1, "SENSITIVE": 2, "DIRECT": 3,
-                "DIRECT-PREFERRED": 4, "PROXY": 5}
+ALLOWED_POLICIES = {"REJECT", "DIRECT", "SENSITIVE", "APPLE-PROXY", "APPLE-CN", "DIRECT-PREFERRED", "PROXY"}
+POLICY_ORDER = {"REJECT": 0, "PRIVATE": 1, "SENSITIVE": 2, "APPLE-PROXY": 3,
+                "APPLE-CN": 4, "DIRECT": 5, "DIRECT-PREFERRED": 6, "PROXY": 7}
 PRIVATE_NETWORKS = (
     ipaddress.ip_network("10.0.0.0/8"), ipaddress.ip_network("172.16.0.0/12"),
     ipaddress.ip_network("192.168.0.0/16"), ipaddress.ip_network("127.0.0.0/8"),
@@ -386,6 +386,8 @@ def parse_policy_source(path):
         body = parts[:policy_index] + parts[policy_index + 1:]
         if len(body) < 2:
             raise ValueError(f"{path}:{line_number}: malformed rule")
+        if policy.startswith("APPLE-") and body[0] not in {"DOMAIN", "DOMAIN-SUFFIX"}:
+            raise ValueError(f"{path}:{line_number}: Apple overrides must use explicit domain rules")
         group = policy
         if body[0].startswith("IP-CIDR"):
             try:
@@ -419,11 +421,10 @@ def attach_policy(rule, policy):
 
 
 def write_client_outputs(root, rules):
-    target = {"REJECT": "广告拦截", "DIRECT": "DIRECT", "SENSITIVE": "敏感服务",
-              "DIRECT-PREFERRED": "直连优先", "PROXY": "日常代理"}
-    providers = {name: [] for name in ("reject", "direct", "sensitive", "direct-preferred", "proxy")}
     names = {"REJECT": "reject", "DIRECT": "direct", "SENSITIVE": "sensitive",
+             "APPLE-PROXY": "apple-proxy", "APPLE-CN": "apple-cn",
              "DIRECT-PREFERRED": "direct-preferred", "PROXY": "proxy"}
+    providers = {name: [] for name in names.values()}
     for group, policy, body in rules:
         if not body.startswith("GEOSITE,") and group != "PRIVATE":
             providers[names[policy]].append(body)
@@ -456,6 +457,7 @@ def write_client_outputs(root, rules):
         "  - RULE-SET,reject,REJECT", *[f"  - {attach_policy(rule, 'REJECT')}" for rule in geosite["REJECT"]],
         *[f"  - {attach_policy(rule, 'DIRECT')}" for rule in private],
         "  - RULE-SET,sensitive,PROXY", *[f"  - {attach_policy(rule, 'PROXY')}" for rule in geosite["SENSITIVE"]],
+        "  - RULE-SET,apple-proxy,PROXY", "  - RULE-SET,apple-cn,DIRECT",
         "  - RULE-SET,direct,DIRECT", *[f"  - {attach_policy(rule, 'DIRECT')}" for rule in geosite["DIRECT"]],
         "  - RULE-SET,direct-preferred,DIRECT",
         *[f"  - {attach_policy(rule, 'DIRECT')}" for rule in geosite["DIRECT-PREFERRED"]],
@@ -480,6 +482,9 @@ def write_client_outputs(root, rules):
         *[attach_policy(rule, "DIRECT") for rule in private],
         f"RULE-SET,{RAW}/rules/sensitive.list,敏感服务",
         f"RULE-SET,{RAW}/shadowrocket/geosite/sensitive.list,敏感服务",
+        "# Apple 境外细分例外先于大陆/共用端点，二者都先于宽泛地理分类",
+        f"RULE-SET,{RAW}/rules/apple-proxy.list,日常代理",
+        f"RULE-SET,{RAW}/rules/apple-cn.list,DIRECT",
         f"RULE-SET,{RAW}/rules/direct.list,DIRECT",
         f"RULE-SET,{RAW}/shadowrocket/geosite/cn.list,DIRECT",
         f"RULE-SET,{RAW}/rules/direct-preferred.list,直连优先",
