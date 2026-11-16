@@ -464,7 +464,8 @@ def write_client_outputs(root, rules):
         "  - RULE-SET,proxy,PROXY", *[f"  - {attach_policy(rule, 'PROXY')}" for rule in geosite["PROXY"]],
     ]
     legacy.extend([
-        "  - GEOIP,CN,DIRECT,no-resolve", "  - MATCH,DIRECT",
+        # GEOIP 参与域名解析判断；加 no-resolve 会让未命中 GEOSITE 的国内站点落到 MATCH 代理。
+        "  - GEOIP,CN,DIRECT", "  - MATCH,DIRECT",
     ])
     atomic_write(root / "clash" / "clash-verge-merge.yaml", "\n".join(legacy))
 

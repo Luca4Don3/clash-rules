@@ -93,7 +93,8 @@ function main(config) {
     "GEOSITE,spotify,日常代理",
     "GEOSITE,twitch,日常代理",
     "GEOSITE,category-porn,日常代理",
-    "GEOIP,CN,DIRECT,no-resolve",
+    // GEOIP 参与域名解析判断；加 no-resolve 会让未命中 GEOSITE 的国内站点落到 MATCH 代理。
+    "GEOIP,CN,DIRECT",
     "MATCH,DIRECT",
   ];
   return config;

@@ -11,6 +11,13 @@ DOMAIN-SUFFIX,doubao.com
 DOMAIN-SUFFIX,baidu.com
 DOMAIN-SUFFIX,minimax.chat
 DOMAIN-SUFFIX,minimaxi.com
+DOMAIN-SUFFIX,npmjs.org
+DOMAIN-SUFFIX,nodejs.org
+DOMAIN-SUFFIX,pypi.org
+DOMAIN-SUFFIX,pythonhosted.org
+DOMAIN-SUFFIX,rubygems.org
+DOMAIN-SUFFIX,crates.io
+DOMAIN-SUFFIX,go.dev
 DOMAIN-SUFFIX,stepfun.com
 DOMAIN-SUFFIX,01.ai
 DOMAIN-SUFFIX,baichuan-ai.com
