@@ -111,9 +111,7 @@ DOMAIN-SUFFIX,doubao.com,DIRECT
 DOMAIN-SUFFIX,baidu.com,DIRECT
 DOMAIN-SUFFIX,minimax.chat,DIRECT
 DOMAIN-SUFFIX,minimaxi.com,DIRECT
-DOMAIN-SUFFIX,hailuoai.com,DIRECT
 # 开发依赖：实测国内可直连，走代理反而绕路
-DOMAIN-SUFFIX,npmmirror.com,DIRECT
 DOMAIN-SUFFIX,npmjs.org,DIRECT
 DOMAIN-SUFFIX,nodejs.org,DIRECT
 DOMAIN-SUFFIX,pypi.org,DIRECT
