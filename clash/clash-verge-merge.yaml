@@ -102,5 +102,5 @@ rules:
   - GEOSITE,spotify,PROXY
   - GEOSITE,twitch,PROXY
   - GEOSITE,category-porn,PROXY
-  - GEOIP,CN,DIRECT,no-resolve
+  - GEOIP,CN,DIRECT
   - MATCH,DIRECT
